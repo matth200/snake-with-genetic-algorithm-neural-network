@@ -65,15 +65,25 @@ void Snake::addFood()
 
 }
 
+void Snake::addQueue()
+{
+	Pos p = queue[queue.size()-1];
+	p.x++;
+	queue.push_back(p);
+}
+
 void Snake::draw(SDL_Surface *screen)
 {
-	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/1000.0*30.0;
-	if(direction==0||direction==2)
-		run=-run;
-	drawSquare(screen,queue[0].x*30.0+((direction<=1)?run:0),queue[0].y*30.0+((direction>1)?run:0),30,30,SDL_MapRGB(screen->format,255,25,25));
+	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
+
+	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0;
 	
-	if(abs(run/30.0)>1.0)
+	for(int i(0);i<queue.size();i++)
+		drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGB(screen->format,255,25,25));
+	
+	if(run>1.0)
 	{
+		Pos oldPos = queue[0];
 		switch(direction)
 		{
 			case 0:
@@ -87,6 +97,13 @@ void Snake::draw(SDL_Surface *screen)
 				break;
 			case 3:
 				queue[0].y++; 
+		}
+
+		for(int i(0);i<queue.size()-1;i++)
+		{
+			Pos n = queue[i+1];
+			queue[i+1] = oldPos;
+			oldPos = n;
 		}
 		prevTime=chrono::high_resolution_clock::now();
 	}

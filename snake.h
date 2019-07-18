@@ -12,7 +12,7 @@
 #include <chrono>
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
-#define SCREEN_WIDTH 500
+#define SCREEN_WIDTH 700
 #define SCREEN_HEIGHT 700
 
 void setPixel(SDL_Surface *screen, int x, int y, Uint32 color);
@@ -29,6 +29,7 @@ class Snake
 public:
 	Snake(int w, int h);
 	void move(int a);
+	void addQueue();
 	void addFood();
 	void draw(SDL_Surface *screen);
 
