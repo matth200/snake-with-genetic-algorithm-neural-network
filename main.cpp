@@ -2,6 +2,10 @@
 #include <SDL/SDL.h>
 #include <cmath>
 
+//random function
+#include <cstdlib>
+#include <ctime>
+
 #include <chrono>
 #include <thread>
 //this_thread::sleep_for();
@@ -16,6 +20,7 @@ using namespace std;
 int main ( int argc, char** argv )
 {
 	ofstream log("log.txt");
+	srand(time(NULL));
 	log << "init" << endl;
 	// initialize SDL video
 	if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
