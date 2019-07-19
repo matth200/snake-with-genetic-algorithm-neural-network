@@ -51,10 +51,6 @@ int main ( int argc, char** argv )
 	snake.addQueue();
 	snake.addQueue();
 	snake.addQueue();
-	snake.addQueue();
-	snake.addQueue();
-	snake.addQueue();
-	snake.addQueue();
 
 	double fpsDirect = 0.0;
 	time_point timeBefore, timeNow, timeFirst = chrono::high_resolution_clock::now();

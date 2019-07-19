@@ -12,6 +12,8 @@
 #include <chrono>
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
+#include <fstream>
+
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
 
@@ -42,6 +44,8 @@ private:
 	int m_w, m_h;
 	char direction, oldDirection;
 	std::vector<char> map;
+
+	std::ofstream log2;
 };
 
 #endif

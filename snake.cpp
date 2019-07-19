@@ -44,6 +44,8 @@ void drawSquare(SDL_Surface *screen, int x, int y, int w, int h, Uint32 color)
 
 Snake::Snake(int w, int h)
 {
+	log2.open("log2.txt");
+
 	//tete du serpent
 	Pos p;
 	p.x = 4;
@@ -54,12 +56,15 @@ Snake::Snake(int w, int h)
 	direction = 1;
 	oldDirection = 0;
 
-	//init de la bouffe
-	newFood();
+	//tableau dynamique qui contient les données de la map
+	map.resize(w*h,-1);
 
 	//pour regler la taille des blocs 
 	m_w = w;
 	m_h = h;
+
+	//init de la bouffe
+	newFood();
 
 	//pour regler la vitesse du serpent
 	prevTime = chrono::high_resolution_clock::now();
@@ -68,6 +73,8 @@ Snake::Snake(int w, int h)
 void Snake::move(int a)
 {
 	oldDirection = direction;
+
+	//empecher qu'il se retourne dans son corps
 	switch(a)
 	{
 		case 0:
@@ -104,17 +111,24 @@ void Snake::newFood()
 void Snake::addQueue()
 {
 	Pos p = queue[queue.size()-1];
+	//changer cette phase pour que la queue sorte droite par rapport au reste du corps
 	p.x++;
 	queue.push_back(p);
 }
 
 bool Snake::collisionQueue(int x, int y)
 {
-	return 0;
+	return (map[x+y*m_w]==0);
 }
 
 bool Snake::collisionWall(int x, int y)
 {
+	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
+
+	//on convertit en pixel
+	x*=w;
+	y*=h;
+	//on renvoit la condition
 	return ( x<0 || x>=SCREEN_WIDTH || y<0 || y>=SCREEN_HEIGHT );
 }
 
@@ -123,6 +137,9 @@ void Snake::draw(SDL_Surface *screen)
 	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
 
 	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0;
+
+	//fooddd
+	drawSquare(screen,food.x*w,food.y*h,w,h,SDL_MapRGB(screen->format,255,25,25));
 
 	//changement des positions des cases
 	if(run>1.0)
@@ -146,17 +163,33 @@ void Snake::draw(SDL_Surface *screen)
 		}
 
 		//on bloque l'avancement si il y a un mur
-		if(!collisionWall(test.x*w,test.y*h))
+		if(!collisionWall(test.x,test.y)&&!collisionQueue(test.x,test.y))
 		{
 			queue[0] = test;
-
-			for(int i(0);i<queue.size()-1;i++)
+			//effacement de la map
+			map.clear();
+			map.resize(m_w*m_h,-1);
+			
+			for(int i(0);i<queue.size();i++)
 			{
-				Pos n = queue[i+1];
-				queue[i+1] = oldPos;
-				oldPos = n;
+				if(i<queue.size()-1)
+				{
+					Pos n = queue[i+1];
+					queue[i+1] = oldPos;
+					oldPos = n; 
+				}
+				//enregistrement des états dans la map
+				map[queue[i].x+queue[i].y*m_w] = 0;
 			}
 		}
+
+		//detection de la bouffe
+		if(queue[0].x==food.x&&queue[0].y==food.y)
+		{
+			newFood();
+			addQueue();
+		}
+
 		prevTime=chrono::high_resolution_clock::now();
 	}
 
