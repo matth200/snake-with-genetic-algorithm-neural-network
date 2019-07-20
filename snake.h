@@ -17,19 +17,22 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
 
-void setPixel(SDL_Surface *screen, int x, int y, Uint32 color);
-void drawLine(SDL_Surface *screen, int x1, int y1, int x2, int y2, Uint32 color);
-void drawSquare(SDL_Surface *screen, int x, int y, int w, int h, Uint32 color);
-
 struct Pos{
 	int x;
 	int y;
 };
 
+void setPixel(SDL_Surface *screen, int x, int y, Uint32 color);
+void drawLine(SDL_Surface *screen, int x1, int y1, int x2, int y2, Uint32 color);
+void drawSquare(SDL_Surface *screen, int x, int y, int w, int h, Uint32 color);
+char detectAround(Pos a, Pos b);
+
+
 class Snake
 {
 public:
 	Snake(int w, int h);
+	void init();
 	void move(int a);
 	void addQueue();
 	void newFood();
@@ -44,6 +47,7 @@ private:
 	int m_w, m_h;
 	char direction, oldDirection;
 	std::vector<char> map;
+	int score;
 
 	std::ofstream log2;
 };

@@ -40,11 +40,37 @@ void drawSquare(SDL_Surface *screen, int x, int y, int w, int h, Uint32 color)
 	}
 }
 
-//class
+char detectAround(Pos a, Pos b)
+{
+	if(a.x+1==b.x&&a.y==b.y)
+		return 1;
+	else if(a.x-1==b.x&&a.y==b.y)
+		return 0;
+	else if(a.x==b.x&&a.y-1==b.y)
+		return 2;
+	else if(a.x==b.x&&a.y+1==b.y)
+		return 3;
+	else
+		return -1;
+}
+
+//class Snake
 
 Snake::Snake(int w, int h)
 {
 	log2.open("log2.txt");
+	
+	//pour regler la taille des blocs 
+	m_w = w;
+	m_h = h;
+
+	init();
+}
+
+void Snake::init()
+{
+	score = 0;
+	queue.clear();
 
 	//tete du serpent
 	Pos p;
@@ -52,16 +78,19 @@ Snake::Snake(int w, int h)
 	p.y = 5;
 	queue.push_back(p);
 
+	//5 queue de base
+	addQueue();
+	addQueue();
+	addQueue();
+	addQueue();
+
 	//pour controller la direction du serpent
-	direction = 1;
+	direction = 3;
 	oldDirection = 0;
 
 	//tableau dynamique qui contient les données de la map
-	map.resize(w*h,-1);
-
-	//pour regler la taille des blocs 
-	m_w = w;
-	m_h = h;
+	map.clear();
+	map.resize(m_w*m_h,-1);
 
 	//init de la bouffe
 	newFood();
@@ -110,9 +139,30 @@ void Snake::newFood()
 
 void Snake::addQueue()
 {
+	//on suit la direction de la queue pour l'ajout du nouveau bout
 	Pos p = queue[queue.size()-1];
-	//changer cette phase pour que la queue sorte droite par rapport au reste du corps
-	p.x++;
+	Pos a = queue[queue.size()-2];
+	switch(detectAround(a,p))
+	{
+		case -1:
+			log2 << "erreur detectAround" << endl;
+			p.x++;
+			break;
+		case 0:
+			p.x--;
+			break;
+		case 1:
+			p.x++;
+			break;
+		case 2:
+			p.y--;
+			break;
+		case 3:
+			p.y++;
+			break;
+
+	}
+
 	queue.push_back(p);
 }
 
@@ -144,7 +194,6 @@ void Snake::draw(SDL_Surface *screen)
 	//changement des positions des cases
 	if(run>1.0)
 	{
-		Pos oldPos = queue[0];
 		Pos test = queue[0];
 		switch(direction)
 		{
@@ -161,6 +210,8 @@ void Snake::draw(SDL_Surface *screen)
 				test.y++; 
 				break;
 		}
+
+		Pos oldPos = queue[0];
 
 		//on bloque l'avancement si il y a un mur
 		if(!collisionWall(test.x,test.y)&&!collisionQueue(test.x,test.y))
@@ -182,12 +233,17 @@ void Snake::draw(SDL_Surface *screen)
 				map[queue[i].x+queue[i].y*m_w] = 0;
 			}
 		}
+		else
+		{
+			init();
+		}
 
 		//detection de la bouffe
 		if(queue[0].x==food.x&&queue[0].y==food.y)
 		{
 			newFood();
 			addQueue();
+			score+=10;
 		}
 
 		prevTime=chrono::high_resolution_clock::now();
