@@ -74,6 +74,7 @@ Snake::~Snake()
 
 void Snake::init()
 {
+	startTime = chrono::high_resolution_clock::now();	
 	score = 0;
 	queue.clear();
 
@@ -259,7 +260,10 @@ void Snake::draw(SDL_Surface *screen)
 		drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGB(screen->format,200,200,200));
 
 	//AFFICHAGE DU SCORE
-	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)).c_str(),SDL_Color({255,255,255}));
+	stringstream streamTime;
+	streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-startTime).count()/1000.0; 
+
+	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+"       temps : "+streamTime.str()+"s").c_str(),SDL_Color({255,255,255}));
 	SDL_Rect pos;
 	pos.y = SCREEN_HEIGHT+25;
 	pos.x = 50;

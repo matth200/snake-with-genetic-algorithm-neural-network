@@ -4,6 +4,9 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 
+#include <iomanip>
+#include <sstream>
+
 #include <cmath>
 #include <vector>
 
@@ -45,7 +48,7 @@ public:
 
 private:
 	std::vector<Pos> queue;
-	time_point prevTime;
+	time_point prevTime, startTime;
 	Pos food;
 	int m_w, m_h;
 	char direction, oldDirection;
