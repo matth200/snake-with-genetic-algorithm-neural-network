@@ -2,6 +2,8 @@
 #define INCLUDE_SNAKE
 
 #include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
+
 #include <cmath>
 #include <vector>
 
@@ -32,6 +34,7 @@ class Snake
 {
 public:
 	Snake(int w, int h);
+	~Snake();
 	void init();
 	void move(int a);
 	void addQueue();
@@ -48,7 +51,7 @@ private:
 	char direction, oldDirection;
 	std::vector<char> map;
 	int score;
-
+	TTF_Font *police;
 	std::ofstream log2;
 };
 

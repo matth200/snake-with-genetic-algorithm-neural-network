@@ -5,7 +5,7 @@ using namespace std;
 
 void setPixel(SDL_Surface *screen, int x, int y, Uint32 color)
 {
-	if(x>=0&&x<SCREEN_WIDTH&&y>=0&&y<SCREEN_HEIGHT)
+	if(x>=0&&x<SCREEN_WIDTH&&y>=0&&y<SCREEN_HEIGHT+100)
 		*((Uint32*)(screen->pixels)+x+y*screen->w) = color;
 }
 
@@ -59,12 +59,17 @@ char detectAround(Pos a, Pos b)
 Snake::Snake(int w, int h)
 {
 	log2.open("log2.txt");
+	police = TTF_OpenFont("pixel_font.ttf",32);
 	
 	//pour regler la taille des blocs 
 	m_w = w;
 	m_h = h;
 
 	init();
+}
+Snake::~Snake()
+{
+	TTF_CloseFont(police);
 }
 
 void Snake::init()
@@ -78,7 +83,7 @@ void Snake::init()
 	p.y = 5;
 	queue.push_back(p);
 
-	//5 queue de base
+	//5 bloc de base avec la tete
 	addQueue();
 	addQueue();
 	addQueue();
@@ -252,4 +257,12 @@ void Snake::draw(SDL_Surface *screen)
 	//dessin des cases
 	for(int i(0);i<queue.size();i++)
 		drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGB(screen->format,200,200,200));
+
+	//AFFICHAGE DU SCORE
+	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)).c_str(),SDL_Color({255,255,255}));
+	SDL_Rect pos;
+	pos.y = SCREEN_HEIGHT+25;
+	pos.x = 50;
+	SDL_BlitSurface(texte,NULL,screen,&pos);
+	SDL_FreeSurface(texte);
 }

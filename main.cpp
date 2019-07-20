@@ -1,5 +1,6 @@
 #include <fstream>
 #include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 #include <cmath>
 
 //random function
@@ -19,6 +20,7 @@ using namespace std;
 
 int main ( int argc, char** argv )
 {
+
 	ofstream log("log.txt");
 	srand(time(NULL));
 	log << "init" << endl;
@@ -28,11 +30,19 @@ int main ( int argc, char** argv )
         	log << "init sdl :" << SDL_GetError() << endl;
         	return 1;
 	}
+	//initialize TTF
+	if( TTF_Init() < 0)
+	{
+		log << "problem with ttf_init" << endl;
+		return 1;
+	}
+
 	// make sure SDL cleans up before exit
 	atexit(SDL_Quit);
-	
+	atexit(TTF_Quit);
+
     // create a new window
-    SDL_Surface* screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
+    SDL_Surface* screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT+100, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
 	if (!screen)
 	{
     	log << "Unable to set video: " << SDL_GetError() << endl;
@@ -83,6 +93,7 @@ int main ( int argc, char** argv )
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 		
 		snake.draw(screen);
+		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
 
 		SDL_Flip(screen);
 		//actualisation
