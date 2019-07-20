@@ -14,9 +14,13 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 #include "snake.h"
 
+#include "m_learning.h"
+
 #define FPS 30.0
 
 using namespace std;
+
+void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m);
 
 int main ( int argc, char** argv )
 {
@@ -42,7 +46,7 @@ int main ( int argc, char** argv )
 	atexit(TTF_Quit);
 
     // create a new window
-    SDL_Surface* screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT+100, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
+    SDL_Surface* screen = SDL_SetVideoMode(SCREEN_WIDTH+OUTSCREEN_W, SCREEN_HEIGHT+OUTSCREEN_H, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
 	if (!screen)
 	{
     	log << "Unable to set video: " << SDL_GetError() << endl;
@@ -55,11 +59,23 @@ int main ( int argc, char** argv )
 	bool continuer = 1;
 	SDL_Event event;
 
+	//IA snake
+	bool autonome = 0;
+
+	MachineLearning playerIA(8);
+	playerIA.addColumn(3);
+	playerIA.addColumn(4);
+
+	//random
+	playerIA.setWeightRandom(3,4);
+
 	//snake
 	Snake snake(60,60);
 
 	double fpsDirect = 0.0;
 	time_point timeBefore, timeNow, timeFirst = chrono::high_resolution_clock::now();
+
+	int ii = 1;
 
 	while(continuer)
 	{
@@ -72,31 +88,69 @@ int main ( int argc, char** argv )
 					continuer = 0;
 					break;
 				case SDL_KEYDOWN:
-					switch(event.key.keysym.sym)
-					{
-						case SDLK_DOWN:
-							snake.move(3);
-							break;
-						case SDLK_UP:
-							snake.move(2);
-							break;
-						case SDLK_RIGHT:
-							snake.move(1);
-							break;
-						case SDLK_LEFT:
-							snake.move(0);
-							break;
+					if(!autonome){
+						switch(event.key.keysym.sym)
+						{
+							case SDLK_DOWN:
+								snake.move(3);
+								break;
+							case SDLK_UP:
+								snake.move(2);
+								break;
+							case SDLK_RIGHT:
+								snake.move(1);
+								break;
+							case SDLK_LEFT:
+								snake.move(0);
+								break;
+							case SDLK_RETURN:
+								autonome = 1;
+								break;
+						}
+					}else{
+						switch(event.key.keysym.sym)
+						{
+							case SDLK_RETURN:
+								autonome = 0;
+								break;
+						}
 					}
 					break;
 			}
 		}
+
+		char *data = snake.getRangeWall();
+		playerIA.setInput(data);
+
+		playerIA.calcul();
+		
+		//mouvement IA
+		if(autonome)
+			snake.move(playerIA.getPrediction());
+
+		//init screen
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 		
-		snake.draw(screen);
-		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
+		drawNeuralNetwork(screen,playerIA);
 
-		SDL_Flip(screen);
+		//dessin des mouvements du serpent
+		snake.draw(screen);	
+
+		if(snake.gameover())
+		{
+			playerIA.setWeightRandom(ii,ii);
+			ii++;
+		}
+
+		//barre qui sépare le score du jeu
+		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
+		drawSquare(screen,SCREEN_WIDTH,0,3,SCREEN_HEIGHT+SCREEN_HEIGHT,SDL_MapRGB(screen->format,255,255,255));
+
+		if(autonome)
+			drawSquare(screen,25,SCREEN_HEIGHT+60,30,30,SDL_MapRGB(screen->format,25,255,25));
+
 		//actualisation
+		SDL_Flip(screen);
 
 		timeNow = chrono::high_resolution_clock::now();
 		if(chrono::duration_cast<chrono::milliseconds>(timeNow-timeBefore).count()>1000.0/FPS)
@@ -107,4 +161,16 @@ int main ( int argc, char** argv )
 		fpsDirect = 1000.0/chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-timeBefore).count();
 	}
 	return 0;
+}
+
+void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
+{
+	for(int j(0);j<m.getNumberColumn();j++)
+	{
+		for(int i(0);i<m.getNetwork(j)->get_number_neuron();i++)
+		{
+			double value = m.getNetwork(j)->get_neuron(i)->get_value();
+			drawSquare(screen,SCREEN_WIDTH+30+j*60,50+i*60,40,40,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
+		}
+	}
 }

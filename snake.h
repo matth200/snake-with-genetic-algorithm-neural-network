@@ -18,10 +18,14 @@
 #include <chrono>
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
+#include <string.h>
+
 #include <fstream>
 
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
+#define OUTSCREEN_W 400
+#define OUTSCREEN_H 100
 
 struct Pos{
 	int x;
@@ -32,6 +36,7 @@ void setPixel(SDL_Surface *screen, int x, int y, Uint32 color);
 void drawLine(SDL_Surface *screen, int x1, int y1, int x2, int y2, Uint32 color);
 void drawSquare(SDL_Surface *screen, int x, int y, int w, int h, Uint32 color);
 char detectAround(Pos a, Pos b);
+char range(int x1, int y1, int x2, int y2);
 
 
 class Snake
@@ -43,6 +48,9 @@ public:
 	void move(int a);
 	void addQueue();
 	void newFood();
+	int get_score();
+	bool gameover();
+	char* getRangeWall();
 	bool collisionQueue(int x, int y);
 	bool collisionWall(int x, int y);
 	void draw(SDL_Surface *screen);
@@ -56,6 +64,7 @@ private:
 	std::vector<char> map;
 	int score, max_score;
 	TTF_Font *police;
+	bool m_over;
 	std::ofstream log2;
 };
 

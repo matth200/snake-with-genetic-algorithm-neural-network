@@ -5,7 +5,7 @@ using namespace std;
 
 void setPixel(SDL_Surface *screen, int x, int y, Uint32 color)
 {
-	if(x>=0&&x<SCREEN_WIDTH&&y>=0&&y<SCREEN_HEIGHT+100)
+	if(x>=0&&x<SCREEN_WIDTH+OUTSCREEN_W&&y>=0&&y<SCREEN_HEIGHT+OUTSCREEN_H)
 		*((Uint32*)(screen->pixels)+x+y*screen->w) = color;
 }
 
@@ -54,6 +54,12 @@ char detectAround(Pos a, Pos b)
 		return -1;
 }
 
+
+char range(int x1, int y1, int x2, int y2)
+{
+	return  char(int(sqrt(pow(x2-x1,2)+pow(y2-y1,2))));
+}
+
 //class Snake
 
 Snake::Snake(int w, int h)
@@ -62,6 +68,7 @@ Snake::Snake(int w, int h)
 	log2.open("log2.txt");
 	police = TTF_OpenFont("pixel_font.ttf",32);
 	max_score = 0;
+	m_over = 0;
 	
 	//pour regler la taille des blocs 
 	m_w = w;
@@ -146,6 +153,103 @@ void Snake::newFood()
 	food.y = int(randomFood/m_w);
 }
 
+char* Snake::getRangeWall()
+{
+	unsigned char *data = new unsigned char[8];
+	memset(data,0,8);
+	Pos p = queue[0];
+	
+	//droite
+	bool collision = 0;
+	unsigned char index = m_w;
+	for(int i(1);i<m_w&&!collision;i++)
+	{
+		collision = collisionWall(p.x+i,p.y);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[1] = index-1;
+
+	//gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_w&&!collision;i++)
+	{
+		collision = collisionWall(p.x-i,p.y);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[0] = index-1;
+
+	//en bas
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&!collision;i++)
+	{
+		collision = collisionWall(p.x,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[3] = index-1;
+
+	//en haut
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&!collision;i++)
+	{
+		collision = collisionWall(p.x,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[2] = index-1;
+
+	//diagonal en haut à gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionWall(p.x-i,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[4] = index-1;
+
+	//diagonal en haut à droite
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionWall(p.x+i,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[5] = index-1;
+
+	//diagonal en bas à droite
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionWall(p.x+i,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[6] = index-1;
+
+	//diagonal en bas à gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionWall(p.x-i,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[7] = index-1;
+
+	return (char*)data;
+}
+
 void Snake::addQueue()
 {
 	//on suit la direction de la queue pour l'ajout du nouveau bout
@@ -154,7 +258,6 @@ void Snake::addQueue()
 	switch(detectAround(a,p))
 	{
 		case -1:
-			log2 << "erreur detectAround" << endl;
 			p.x++;
 			break;
 		case 0:
@@ -182,13 +285,20 @@ bool Snake::collisionQueue(int x, int y)
 
 bool Snake::collisionWall(int x, int y)
 {
-	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
-
-	//on convertit en pixel
-	x*=w;
-	y*=h;
 	//on renvoit la condition
-	return ( x<0 || x>=SCREEN_WIDTH || y<0 || y>=SCREEN_HEIGHT );
+	return ( x<0 || x>=m_w || y<0 || y>=m_h );
+}
+
+int Snake::get_score()
+{
+	return score;
+}
+
+bool Snake::gameover()
+{
+	bool over = m_over;
+	m_over = 0;
+	return over;
 }
 
 void Snake::draw(SDL_Surface *screen)
@@ -249,7 +359,10 @@ void Snake::draw(SDL_Surface *screen)
 		}
 		//si le joueur perds
 		else
+		{
 			init();
+			m_over = 1;
+		}
 
 		//detection de la bouffe
 		if(queue[0].x==food.x&&queue[0].y==food.y)
@@ -264,9 +377,11 @@ void Snake::draw(SDL_Surface *screen)
 
 	//dessin des cases
 	for(int i(0);i<queue.size();i++)
-		drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGB(screen->format,200,200,200));
+		drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGBA(screen->format,200,200,200,100));
 
 	//AFFICHAGE DU SCORE
+
+	//on met dans un stringstream pour avoir que 3 décimals
 	stringstream streamTime;
 	streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-startTime).count()/1000.0; 
 
