@@ -4,6 +4,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 
+//pour stringstream et mettre des flottants fixe
 #include <iomanip>
 #include <sstream>
 
@@ -53,7 +54,7 @@ private:
 	int m_w, m_h;
 	char direction, oldDirection;
 	std::vector<char> map;
-	int score;
+	int score, max_score;
 	TTF_Font *police;
 	std::ofstream log2;
 };

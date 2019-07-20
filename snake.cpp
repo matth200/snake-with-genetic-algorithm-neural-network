@@ -58,13 +58,16 @@ char detectAround(Pos a, Pos b)
 
 Snake::Snake(int w, int h)
 {
+	//initialiser une seule fois de tous le jeu
 	log2.open("log2.txt");
 	police = TTF_OpenFont("pixel_font.ttf",32);
+	max_score = 0;
 	
 	//pour regler la taille des blocs 
 	m_w = w;
 	m_h = h;
 
+	//init pour le jeu qui est appelé à chaque fois que le joueur perds
 	init();
 }
 Snake::~Snake()
@@ -192,7 +195,12 @@ void Snake::draw(SDL_Surface *screen)
 {
 	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
 
+	//variable de la vitesse du serpent
 	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0;
+
+	//changement du max_score
+	if(score>max_score)
+		max_score = score;
 
 	//fooddd
 	drawSquare(screen,food.x*w,food.y*h,w,h,SDL_MapRGB(screen->format,255,25,25));
@@ -239,10 +247,9 @@ void Snake::draw(SDL_Surface *screen)
 				map[queue[i].x+queue[i].y*m_w] = 0;
 			}
 		}
+		//si le joueur perds
 		else
-		{
 			init();
-		}
 
 		//detection de la bouffe
 		if(queue[0].x==food.x&&queue[0].y==food.y)
@@ -263,10 +270,10 @@ void Snake::draw(SDL_Surface *screen)
 	stringstream streamTime;
 	streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-startTime).count()/1000.0; 
 
-	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+"       temps : "+streamTime.str()+"s").c_str(),SDL_Color({255,255,255}));
+	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+" ("+to_string(max_score)+")    temps : "+streamTime.str()+"s").c_str(),SDL_Color({255,255,255}));
 	SDL_Rect pos;
 	pos.y = SCREEN_HEIGHT+25;
-	pos.x = 50;
+	pos.x = 25;
 	SDL_BlitSurface(texte,NULL,screen,&pos);
 	SDL_FreeSurface(texte);
 }
