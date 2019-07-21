@@ -264,7 +264,7 @@ int main ( int argc, char** argv )
 					best_IA = snakeSelection[0];
 
 				//affichage de la liste
-				log << "liste rangé" << endl;
+				log << "generation " << generation << endl;
 				for(int i(0);i<snakeSelection.size();i++)
 				{
 					log << i << ": " << snakeSelection[i].score << " | ";
@@ -289,7 +289,10 @@ int main ( int argc, char** argv )
 						getAdn(snakeSelection[i].m,adn);
 
 						//we gonna mutate this babyyyy
-						
+						const int randomNumber = 500;
+						int cursor = rand()%adn.size();
+						adn[cursor] = rand()%(randomNumber*1000)/1000.0-randomNumber/2.0;
+
 						//set adn
 						setAdn(snakeSelection[i].m,adn);
 					}
