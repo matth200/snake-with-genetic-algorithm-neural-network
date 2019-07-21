@@ -21,8 +21,10 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30.0
 
 //parametre GENETIC_ALGORITHM
+#define NBR_POPULATION 35
+#define FRQ_MUTATION 8.0
+#define MIXADN_CURSOR 0.75
 #define NBR_SELECTION 20
-#define FRQ_MUTATION 2.0
 
 using namespace std;
 
@@ -88,7 +90,6 @@ int main ( int argc, char** argv )
 	bool autonome = 1;
 
 	MachineLearning playerIA(8);
-	playerIA.addColumn(6);
 	playerIA.addColumn(6);
 	playerIA.addColumn(4);
 
@@ -168,7 +169,7 @@ int main ( int argc, char** argv )
 			}
 		}
 		//vitesse du serpent
-		snake.set_speed(5);
+		snake.set_speed(10);
 		
 		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
@@ -214,12 +215,12 @@ int main ( int argc, char** argv )
 		if(snake.gameover())
 		{
 			//selection
-			if(NBR_SELECTION>snakeSelection.size()&&autonome){
+			if(NBR_POPULATION>snakeSelection.size()&&autonome){
 				tmpSelection.score = int(1000.0*snake.get_time());
 				snake.init_time();
 				tmpSelection.m = playerIA;
 
-				if(generation!=1&&indexInPopulation<8)
+				if(generation!=1&&indexInPopulation<NBR_SELECTION)
 					snakeSelection[indexInPopulation] = tmpSelection;
 				else	
 					snakeSelection.push_back(tmpSelection);
@@ -228,8 +229,8 @@ int main ( int argc, char** argv )
 				selectionReady = 1;
 
 				//selection
-				vector<VarSelection> comparaisonListe(NBR_SELECTION);
-				for(int i(0);i<NBR_SELECTION;i++)
+				vector<VarSelection> comparaisonListe(NBR_POPULATION);
+				for(int i(0);i<NBR_POPULATION;i++)
 				{
 					comparaisonListe[i].score = 0;
 				}
@@ -254,9 +255,9 @@ int main ( int argc, char** argv )
 						}
 					}
 				}
-				//selection des 8 meilleurs
+				//selection des NBR_SELECTION meilleurs
 				snakeSelection.clear();
-				for(int i(0);i<8;i++)
+				for(int i(0);i<NBR_SELECTION;i++)
 					snakeSelection.push_back(comparaisonListe[i]);
 
 				//on récupére le gagnant si il est meilleur que ceux des génération d'avant
@@ -274,28 +275,27 @@ int main ( int argc, char** argv )
 				//create the babys
 				for(int i(0);i<int(snakeSelection.size()/2.0);i++)
 				{
+
 					makeBabys(snakeSelection[i*2].m,snakeSelection[i*2+1].m);
 				}
-
 
 				//mutation
 				for(int i(0);i<snakeSelection.size();i++)
 				{
 					//we see if there is a mutation or not
-					if(rand()%1000<=FRQ_MUTATION*10)
-					{
-						//get adn
-						vector<double> adn;
-						getAdn(snakeSelection[i].m,adn);
 
-						//we gonna mutate this babyyyy
-						const int randomNumber = 500;
+					//get adn
+					vector<double> adn;
+					getAdn(snakeSelection[i].m,adn);
+
+					//we gonna mutate this babyyyy
+					const int randomNumber = 100;
+					for(int j(0);j<FRQ_MUTATION/100.0*adn.size();j++){
 						int cursor = rand()%adn.size();
 						adn[cursor] = rand()%(randomNumber*1000)/1000.0-randomNumber/2.0;
-
-						//set adn
-						setAdn(snakeSelection[i].m,adn);
 					}
+					//set adn
+					setAdn(snakeSelection[i].m,adn);
 				}
 
 
@@ -313,8 +313,8 @@ int main ( int argc, char** argv )
 			}
 
 			//new player with random gene 
-			if(generation==1 || indexInPopulation>=8)
-  				playerIA.setWeightRandom(500,500);
+			if(generation==1 || indexInPopulation>=NBR_SELECTION)
+  				playerIA.setWeightRandom(100,50);
   			//we take in our list the new bays
   			else
   				playerIA = snakeSelection[indexInPopulation].m;
@@ -350,15 +350,27 @@ void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 void makeBabys(MachineLearning &m1, MachineLearning &m2)
 {
 	//get the adn 
-	vector<double> adn1, adn2;
+	vector<double> adn1, adn2, adnT1, adnT2;
+	//pour qu'il prenne les meme réseaux de neurone
 	getAdn(m1,adn1);
 	getAdn(m2,adn2);
 
 	//mix the adn <<<----
+	for(int i(0);i<adn1.size();i++)
+	{
+		if(i<adn1.size()*MIXADN_CURSOR)
+		{
+			adnT1.push_back(adn1[i]);
+			adnT2.push_back(adn2[i]);
+		}else{
+			adnT1.push_back(adn2[i]);
+			adnT2.push_back(adn1[i]);
+		}
+	}
 
 	//set the adn
-	setAdn(m1,adn1);
-	setAdn(m2,adn2);
+	setAdn(m1,adnT1);
+	setAdn(m2,adnT2);
 }
 
 void getAdn(MachineLearning &m, vector<double> &adn)
@@ -379,18 +391,36 @@ void getAdn(MachineLearning &m, vector<double> &adn)
 
 void setAdn(MachineLearning &m, vector<double> &adn)
 {
-	int index = 0;
+	int index = 1;
 	for(int l(0);l<m.getNumberColumn()-1;l++)
 	{
 		for(int j(0);j<m.getNetwork(l+1)->get_number_neuron();j++)
 		{
 			for(int i(0);i<m.getNetwork(l+1)->get_neuron(j)->numberConnection();i++)
 			{
-				m.getNetwork(l+1)->get_neuron(j)->set_weight(i,adn[index]);
+				//m.getNetwork(l+1)->get_neuron(j)->set_weight(i,adn[index]);
 				index++;
 			}
-			m.getNetwork(l+1)->get_neuron(j)->set_bias(adn[index]);
+			//m.getNetwork(l+1)->get_neuron(j)->set_bias(adn[index]);
 			index++;
+		}
+	}
+
+	if(adn.size()==index)
+	{
+		index = 0;
+		for(int l(0);l<m.getNumberColumn()-1;l++)
+		{
+			for(int j(0);j<m.getNetwork(l+1)->get_number_neuron();j++)
+			{
+				for(int i(0);i<m.getNetwork(l+1)->get_neuron(j)->numberConnection();i++)
+				{
+					m.getNetwork(l+1)->get_neuron(j)->set_weight(i,adn[index]);
+					index++;
+				}
+				m.getNetwork(l+1)->get_neuron(j)->set_bias(adn[index]);
+				index++;
+			}
 		}
 	}
 }

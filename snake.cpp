@@ -92,8 +92,8 @@ void Snake::init()
 
 	//tete du serpent
 	Pos p;
-	p.x = 4;
-	p.y = 5;
+	p.x = 29;
+	p.y = 29;
 	queue.push_back(p);
 
 	//vitesse initialiser
