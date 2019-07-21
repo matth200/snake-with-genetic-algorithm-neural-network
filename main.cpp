@@ -22,11 +22,13 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 //parametre GENETIC_ALGORITHM
 #define NBR_SELECTION 20
-#define FRQ_MUTATION 0.05
+#define FRQ_MUTATION 2.0
 
 using namespace std;
 
 void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m);
+void getAdn(MachineLearning &m, vector<double> &adn);
+void setAdn(MachineLearning &m, vector<double> &adn);
 void makeBabys(MachineLearning &m1, MachineLearning &m2);
 
 //variable pour effectuer la selection
@@ -279,7 +281,18 @@ int main ( int argc, char** argv )
 				//mutation
 				for(int i(0);i<snakeSelection.size();i++)
 				{
-					//select a random baby to affect some mutation
+					//we see if there is a mutation or not
+					if(rand()%1000<=FRQ_MUTATION*10)
+					{
+						//get adn
+						vector<double> adn;
+						getAdn(snakeSelection[i].m,adn);
+
+						//we gonna mutate this babyyyy
+						
+						//set adn
+						setAdn(snakeSelection[i].m,adn);
+					}
 				}
 
 
@@ -335,5 +348,46 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 {
 	//get the adn 
 	vector<double> adn1, adn2;
-	//for(int i(0);i<)
+	getAdn(m1,adn1);
+	getAdn(m2,adn2);
+
+	//mix the adn <<<----
+
+	//set the adn
+	setAdn(m1,adn1);
+	setAdn(m2,adn2);
+}
+
+void getAdn(MachineLearning &m, vector<double> &adn)
+{
+	adn.clear();
+	for(int l(0);l<m.getNumberColumn()-1;l++)
+	{
+		for(int j(0);j<m.getNetwork(l+1)->get_number_neuron();j++)
+		{
+			for(int i(0);i<m.getNetwork(l+1)->get_neuron(j)->numberConnection();i++)
+			{
+				adn.push_back(m.getNetwork(l+1)->get_neuron(j)->get_weight(i));
+			}
+			adn.push_back(m.getNetwork(l+1)->get_neuron(j)->get_bias());
+		}
+	}
+}
+
+void setAdn(MachineLearning &m, vector<double> &adn)
+{
+	int index = 0;
+	for(int l(0);l<m.getNumberColumn()-1;l++)
+	{
+		for(int j(0);j<m.getNetwork(l+1)->get_number_neuron();j++)
+		{
+			for(int i(0);i<m.getNetwork(l+1)->get_neuron(j)->numberConnection();i++)
+			{
+				m.getNetwork(l+1)->get_neuron(j)->set_weight(i,adn[index]);
+				index++;
+			}
+			m.getNetwork(l+1)->get_neuron(j)->set_bias(adn[index]);
+			index++;
+		}
+	}
 }
