@@ -47,6 +47,7 @@ public:
 	void init();
 	void move(int a);
 	void addQueue();
+	void set_speed(double v);
 	void newFood();
 	int get_score();
 	bool gameover();
@@ -65,6 +66,7 @@ private:
 	int score, max_score;
 	TTF_Font *police;
 	bool m_over;
+	double vitesse;
 	std::ofstream log2;
 };
 

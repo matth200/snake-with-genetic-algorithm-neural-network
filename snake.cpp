@@ -94,6 +94,9 @@ void Snake::init()
 	p.y = 5;
 	queue.push_back(p);
 
+	//vitesse initialiser
+	vitesse = 1.0;
+
 	//5 bloc de base avec la tete
 	addQueue();
 	addQueue();
@@ -301,12 +304,18 @@ bool Snake::gameover()
 	return over;
 }
 
+void Snake::set_speed(double v)
+{
+	if(v>0)
+		vitesse = v;
+} 
+
 void Snake::draw(SDL_Surface *screen)
 {
 	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
 
 	//variable de la vitesse du serpent
-	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0;
+	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0*vitesse;
 
 	//changement du max_score
 	if(score>max_score)

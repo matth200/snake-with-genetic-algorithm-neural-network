@@ -94,10 +94,9 @@ int main ( int argc, char** argv )
 	//snake
 	Snake snake(60,60);
 
+	//gestion du temps et des fps
 	double fpsDirect = 0.0;
 	time_point timeBefore, timeNow, timeFirst = chrono::high_resolution_clock::now();
-
-	int ii = 1;
 
 	while(continuer)
 	{
@@ -140,6 +139,9 @@ int main ( int argc, char** argv )
 					break;
 			}
 		}
+		//vitesse du serpent
+		snake.set_speed(5);
+		
 		//mise à jour des informations dans le réseaux de neurone
 		char *data = snake.getRangeWall();
 		playerIA.setInput(data);
