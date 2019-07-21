@@ -262,6 +262,204 @@ char* Snake::getRangeWall()
 	return (char*)data;
 }
 
+char* Snake::getRangeQueue()
+{
+	unsigned char *data = new unsigned char[8];
+	memset(data,0,8);
+
+	//position de la tete
+	Pos p = queue[0];
+	
+	//droite
+	bool collision = 0;
+	unsigned char index = m_w;
+	for(int i(1);i<m_w&&!collision;i++)
+	{
+		collision = collisionQueue(p.x+i,p.y);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[1] = index-1;
+
+	//gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_w&&!collision;i++)
+	{
+		collision = collisionQueue(p.x-i,p.y);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[0] = index-1;
+
+	//en bas
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&!collision;i++)
+	{
+		collision = collisionQueue(p.x,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[3] = index-1;
+
+	//en haut
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&!collision;i++)
+	{
+		collision = collisionQueue(p.x,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[2] = index-1;
+
+	//diagonal en haut à gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionQueue(p.x-i,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[4] = index-1;
+
+	//diagonal en haut à droite
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionQueue(p.x+i,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[5] = index-1;
+
+	//diagonal en bas à droite
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionQueue(p.x+i,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[6] = index-1;
+
+	//diagonal en bas à gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionQueue(p.x-i,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[7] = index-1;
+
+	return (char*)data;
+}
+
+char* Snake::getRangeFood()
+{
+	unsigned char *data = new unsigned char[8];
+	memset(data,0,8);
+
+	//position de la tete
+	Pos p = queue[0];
+	
+	//droite
+	bool collision = 0;
+	unsigned char index = m_w;
+	for(int i(1);i<m_w&&!collision;i++)
+	{
+		collision = collisionFood(p.x+i,p.y);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[1] = index-1;
+
+	//gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_w&&!collision;i++)
+	{
+		collision = collisionFood(p.x-i,p.y);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[0] = index-1;
+
+	//en bas
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&!collision;i++)
+	{
+		collision = collisionFood(p.x,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[3] = index-1;
+
+	//en haut
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&!collision;i++)
+	{
+		collision = collisionFood(p.x,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[2] = index-1;
+
+	//diagonal en haut à gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionFood(p.x-i,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[4] = index-1;
+
+	//diagonal en haut à droite
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionFood(p.x+i,p.y-i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[5] = index-1;
+
+	//diagonal en bas à droite
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionFood(p.x+i,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[6] = index-1;
+
+	//diagonal en bas à gauche
+	collision = 0;
+	index = m_w;
+	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	{
+		collision = collisionFood(p.x-i,p.y+i);
+		if(collision)
+			index = (unsigned char)(double(i)/m_w*255.0);
+	}
+	data[7] = index-1;
+
+	return (char*)data;
+}
+
 void Snake::addQueue()
 {
 	//on suit la direction de la queue pour l'ajout du nouveau bout
@@ -299,6 +497,11 @@ bool Snake::collisionWall(int x, int y)
 {
 	//on renvoit la condition
 	return ( x<0 || x>=m_w || y<0 || y>=m_h );
+}
+
+bool Snake::collisionFood(int x, int y)
+{
+	return x==food.x&&y==food.y;
 }
 
 int Snake::get_score()
@@ -392,7 +595,7 @@ void Snake::draw(SDL_Surface *screen, bool pause)
 		}
 
 		//detection de la bouffe
-		if(queue[0].x==food.x&&queue[0].y==food.y)
+		if(collisionFood(queue[0].x,queue[0].y))
 		{
 			newFood();
 			addQueue();

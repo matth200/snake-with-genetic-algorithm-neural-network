@@ -54,8 +54,11 @@ public:
 	int get_score();
 	bool gameover();
 	char* getRangeWall();
+	char* getRangeQueue();
+	char* getRangeFood();
 	bool collisionQueue(int x, int y);
 	bool collisionWall(int x, int y);
+	bool collisionFood(int x, int y);
 	void draw(SDL_Surface *screen, bool pause);
 
 private:
