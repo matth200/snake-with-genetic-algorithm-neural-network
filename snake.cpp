@@ -86,8 +86,6 @@ Snake::~Snake()
 
 void Snake::init()
 {
-	
-	score = 0;
 	queue.clear();
 
 	//tete du serpent
@@ -125,6 +123,9 @@ void Snake::init_time()
 	//tempss
 	startTime = chrono::high_resolution_clock::now();	
 	secondTime = chrono::high_resolution_clock::now();
+
+	//Score
+	score = 0;
 }
 
 void Snake::move(int a)
@@ -173,91 +174,91 @@ char* Snake::getRangeWall()
 	
 	//droite
 	bool collision = 0;
-	unsigned char index = m_w;
+	unsigned char index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
 		collision = collisionWall(p.x+i,p.y);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[1] = index-1;
+	data[1] = index;
 
 	//gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
 		collision = collisionWall(p.x-i,p.y);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[0] = index-1;
+	data[0] = index;
 
 	//en bas
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
 		collision = collisionWall(p.x,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[3] = index-1;
+	data[3] = index;
 
 	//en haut
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
 		collision = collisionWall(p.x,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[2] = index-1;
+	data[2] = index;
 
 	//diagonal en haut à gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionWall(p.x-i,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[4] = index-1;
+	data[4] = index;
 
 	//diagonal en haut à droite
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionWall(p.x+i,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[5] = index-1;
+	data[5] = index;
 
 	//diagonal en bas à droite
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionWall(p.x+i,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[6] = index-1;
+	data[6] = index;
 
 	//diagonal en bas à gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionWall(p.x-i,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[7] = index-1;
+	data[7] = index;
 
 	return (char*)data;
 }
@@ -272,91 +273,91 @@ char* Snake::getRangeQueue()
 	
 	//droite
 	bool collision = 0;
-	unsigned char index = m_w;
+	unsigned char index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
 		collision = collisionQueue(p.x+i,p.y);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[1] = index-1;
+	data[1] = index;
 
 	//gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
 		collision = collisionQueue(p.x-i,p.y);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[0] = index-1;
+	data[0] = index;
 
 	//en bas
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
 		collision = collisionQueue(p.x,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[3] = index-1;
+	data[3] = index;
 
 	//en haut
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
 		collision = collisionQueue(p.x,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[2] = index-1;
+	data[2] = index;
 
 	//diagonal en haut à gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionQueue(p.x-i,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[4] = index-1;
+	data[4] = index;
 
 	//diagonal en haut à droite
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionQueue(p.x+i,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[5] = index-1;
+	data[5] = index;
 
 	//diagonal en bas à droite
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionQueue(p.x+i,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[6] = index-1;
+	data[6] = index;
 
 	//diagonal en bas à gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionQueue(p.x-i,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[7] = index-1;
+	data[7] = index;
 
 	return (char*)data;
 }
@@ -371,91 +372,91 @@ char* Snake::getRangeFood()
 	
 	//droite
 	bool collision = 0;
-	unsigned char index = m_w;
+	unsigned char index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
 		collision = collisionFood(p.x+i,p.y);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[1] = index-1;
+	data[1] = index;
 
 	//gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
 		collision = collisionFood(p.x-i,p.y);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[0] = index-1;
+	data[0] = index;
 
 	//en bas
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
 		collision = collisionFood(p.x,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[3] = index-1;
+	data[3] = index;
 
 	//en haut
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
 		collision = collisionFood(p.x,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[2] = index-1;
+	data[2] = index;
 
 	//diagonal en haut à gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionFood(p.x-i,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[4] = index-1;
+	data[4] = index;
 
 	//diagonal en haut à droite
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionFood(p.x+i,p.y-i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[5] = index-1;
+	data[5] = index;
 
 	//diagonal en bas à droite
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionFood(p.x+i,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[6] = index-1;
+	data[6] = index;
 
 	//diagonal en bas à gauche
 	collision = 0;
-	index = m_w;
+	index = 0;
 	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
 	{
 		collision = collisionFood(p.x-i,p.y+i);
 		if(collision)
-			index = (unsigned char)(double(i)/m_w*255.0);
+			index = (unsigned char)(255-double(i-1)/m_w*255.0);
 	}
-	data[7] = index-1;
+	data[7] = index;
 
 	return (char*)data;
 }

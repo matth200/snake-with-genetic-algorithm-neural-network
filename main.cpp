@@ -21,10 +21,10 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30.0
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 20
-#define FRQ_MUTATION 0.05
-#define MIXADN_CURSOR 0.6
-#define NBR_SELECTION 8
+#define NBR_POPULATION 10
+#define FRQ_MUTATION 0.01
+#define MIXADN_CURSOR 0.2
+#define NBR_SELECTION 7
 
 using namespace std;
 
@@ -41,6 +41,7 @@ void getAdn(MachineLearning &m, vector<double> &adn);
 void setAdn(MachineLearning &m, vector<double> &adn);
 void makeBabys(MachineLearning &m1, MachineLearning &m2);
 VarSelection selectionRandomly(vector<VarSelection> &players);
+double distance(int x1, int y1, int x2, int y2);
 
 int main ( int argc, char** argv )
 {
@@ -67,7 +68,6 @@ int main ( int argc, char** argv )
 	vector<VarSelection> snakeSelection;
 
 	VarSelection tmpSelection;
-	tmpSelection.m.open(8);
 	bool selectionReady = 0;
 
 	// make sure SDL cleans up before exit
@@ -92,12 +92,12 @@ int main ( int argc, char** argv )
 	bool autonome = 1;
 	bool bestPlayerInRoad = 0;
 
-	MachineLearning playerIA(8);
-	playerIA.addColumn(6);
+	MachineLearning playerIA(24);
+	playerIA.addColumn(16);
 	playerIA.addColumn(4);
 
 	//random
-	playerIA.setWeightRandom(500,500);
+	playerIA.setWeightRandom(100,100);
 
 	//snake
 	Snake snake(60,60);
@@ -190,7 +190,7 @@ int main ( int argc, char** argv )
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 
 		//vitesse du serpent
-		snake.set_speed(5);
+		snake.set_speed(3);
 
 		if(bestPlayerInRoad)
 		{
@@ -201,7 +201,11 @@ int main ( int argc, char** argv )
 		
 		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
-		playerIA.setInput(data);
+		playerIA.setInput(data,8,0);
+		data = snake.getRangeQueue();
+		playerIA.setInput(data,8,8);
+		data = snake.getRangeFood();
+		playerIA.setInput(data,8,16);
 
 		//mise à jour des informations dans le réseaux de neurone
 		playerIA.calcul();
@@ -240,7 +244,7 @@ int main ( int argc, char** argv )
 		{
 			//selection
 			if(NBR_POPULATION>snakeSelection.size()&&autonome){
-				tmpSelection.score = int(1000.0*snake.get_time());
+				tmpSelection.score = int(1000.0*snake.get_time()+snake.get_score()*1000.0);
 				snake.init_time();
 				tmpSelection.m = playerIA;
 
@@ -285,12 +289,14 @@ int main ( int argc, char** argv )
 					best_IA = comparaisonListe[0];
 
 				//affichage de la liste
+				/*
 				log << "generation " << generation << endl;
 				for(int i(0);i<comparaisonListe.size();i++)
 				{
 					log << i << ": " << comparaisonListe[i].score << " | ";
 				}
 				log << endl;
+				*/
 
 				//selection and create babys finally
 				vector<VarSelection> copy = comparaisonListe;
@@ -308,12 +314,6 @@ int main ( int argc, char** argv )
 				}
 				log << "create babys okay" << endl;
 
-				/*
-				//copy des plus importants	
-				for(int i(0);i<NBR_SELECTION;i++)
-					snakeSelection.push_back(comparaisonListe[i]);
-				*/
-
 				//mutation
 				for(int i(0);i<snakeSelection.size();i++)
 				{
@@ -324,13 +324,15 @@ int main ( int argc, char** argv )
 					getAdn(snakeSelection[i].m,adn);
 
 					//we gonna mutate this babyyyy
-					const int randomNumber = 100;
+					const int randomNumber = 10;
 					for(int j(0);j<adn.size();j++){
-						if(rand()%100<FRQ_MUTATION*100.0)
+						if(rand()%101<FRQ_MUTATION*100.0)
 						{
 							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
 						}
+						log << "muté ,";
 					}
+					log << endl;
 					//set adn
 					setAdn(snakeSelection[i].m,adn);
 				}
@@ -341,6 +343,9 @@ int main ( int argc, char** argv )
 				VarSelection copyBest = best_IA;
 				copyBest.score = 0;
 				snakeSelection.push_back(copyBest);
+
+
+				//log << "taille snakeSelection" << snakeSelection.size() << endl;
 
 				//on indique qu'on passe à la génération d'au dessus
 				generation++;
@@ -357,10 +362,13 @@ int main ( int argc, char** argv )
 
 			//new player with random gene 
 			if(generation==1 || indexInPopulation>=NBR_SELECTION+1)
-  				playerIA.setWeightRandom(100,50);
+  				playerIA.setWeightRandom(10,10);
   			//we take in our list the new bays
   			else
+  			{
   				playerIA = snakeSelection[indexInPopulation].m;
+  				log << "iA number : " << indexInPopulation << endl;
+  			}
 		}
 
 		//actualisation
@@ -385,7 +393,7 @@ void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 		for(int i(0);i<m.getNetwork(j)->get_number_neuron();i++)
 		{
 			double value = m.getNetwork(j)->get_neuron(i)->get_value();
-			drawSquare(screen,SCREEN_WIDTH+30+j*80,50+i*60,40,40,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
+			drawSquare(screen,SCREEN_WIDTH+30+j*60,50+i*30,20,20,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
 		}
 	}
 }
@@ -491,4 +499,9 @@ VarSelection selectionRandomly(vector<VarSelection> &players)
 	}
 	VarSelection copy;
 	return copy;
+}
+
+double distance(int x1, int y1, int x2, int y2)
+{
+	return sqrt(pow(x2-x1,2)+pow(y2-y1,2));
 }

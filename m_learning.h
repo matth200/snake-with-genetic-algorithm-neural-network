@@ -61,6 +61,7 @@ public:
 	MachineLearning(int sizeInput);
 	void open(int sizeInput);
 	void setInput(char *data);
+	void setInput(char *data, int size, int cursor);
 	void setWeightRandom(int maxW = 2, int maxB = 2);
     void calcul();
     NetworkNeuron* getNetwork(int i);

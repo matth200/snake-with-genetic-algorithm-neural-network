@@ -125,6 +125,16 @@ void MachineLearning::setInput(char *data)
 	}
 }
 
+void MachineLearning::setInput(char *data, int size, int cursor)
+{
+	double value = 0;
+	for(int i(0);i<size;i++)
+	{
+		value = (*((unsigned char*)(data+i)))/255.0;
+		Lines[0].get_neuron(cursor+i)->set_value(value);
+	}
+}
+
 void MachineLearning::setWeightRandom(int maxW, int maxB)
 {
 	maxW*=1000;
