@@ -102,7 +102,15 @@ Neuron* NetworkNeuron::get_neuron(int index)
 	return &(neurons[index]);	
 }
 
+MachineLearning::MachineLearning()
+{}
+
 MachineLearning::MachineLearning(int sizeInput)
+{
+	open(sizeInput);
+}
+
+void MachineLearning::open(int sizeInput)
 {
 	Lines.push_back(NetworkNeuron(sizeInput,0));
 }
@@ -119,7 +127,6 @@ void MachineLearning::setInput(char *data)
 
 void MachineLearning::setWeightRandom(int maxW, int maxB)
 {
-	srand(time(NULL));
 	maxW*=1000;
 	maxB*=1000;
 	for(int l(0);l<Lines.size()-1;l++)

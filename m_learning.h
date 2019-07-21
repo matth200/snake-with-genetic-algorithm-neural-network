@@ -57,7 +57,9 @@ protected:
 class MachineLearning
 {
 public:
+	MachineLearning();
 	MachineLearning(int sizeInput);
+	void open(int sizeInput);
 	void setInput(char *data);
 	void setWeightRandom(int maxW = 2, int maxB = 2);
     void calcul();

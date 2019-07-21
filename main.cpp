@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <vector>
+
 #include <chrono>
 #include <thread>
 //this_thread::sleep_for();
@@ -18,9 +20,20 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 #define FPS 30.0
 
+//parametre GENETIC_ALGORITHM
+#define NBR_SELECTION 20
+#define FRQ_MUTATION 0.05
+
 using namespace std;
 
 void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m);
+
+//variable pour effectuer la selection
+struct VarSelection
+{
+	MachineLearning m;
+	int score;
+};
 
 int main ( int argc, char** argv )
 {
@@ -40,6 +53,14 @@ int main ( int argc, char** argv )
 		log << "problem with ttf_init" << endl;
 		return 1;
 	}
+
+	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",23);
+
+	//variable pour la selection
+	vector<VarSelection> snakeSelection;
+
+	VarSelection tmpSelection;
+	tmpSelection.m.open(8);
 
 	// make sure SDL cleans up before exit
 	atexit(SDL_Quit);
@@ -63,11 +84,12 @@ int main ( int argc, char** argv )
 	bool autonome = 0;
 
 	MachineLearning playerIA(8);
-	playerIA.addColumn(3);
+	playerIA.addColumn(6);
+	playerIA.addColumn(6);
 	playerIA.addColumn(4);
 
 	//random
-	playerIA.setWeightRandom(3,4);
+	playerIA.setWeightRandom(70,70);
 
 	//snake
 	Snake snake(60,60);
@@ -118,7 +140,7 @@ int main ( int argc, char** argv )
 					break;
 			}
 		}
-
+		//mise à jour des informations dans le réseaux de neurone
 		char *data = snake.getRangeWall();
 		playerIA.setInput(data);
 
@@ -131,6 +153,7 @@ int main ( int argc, char** argv )
 		//init screen
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 		
+		//on affiche les infos du réseaux de neurone
 		drawNeuralNetwork(screen,playerIA);
 
 		//dessin des mouvements du serpent
@@ -138,14 +161,14 @@ int main ( int argc, char** argv )
 
 		if(snake.gameover())
 		{
-			playerIA.setWeightRandom(ii,ii);
-			ii++;
+			playerIA.setWeightRandom(500,500);
 		}
 
 		//barre qui sépare le score du jeu
 		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
 		drawSquare(screen,SCREEN_WIDTH,0,3,SCREEN_HEIGHT+SCREEN_HEIGHT,SDL_MapRGB(screen->format,255,255,255));
 
+		//affichage du mode autonome
 		if(autonome)
 			drawSquare(screen,25,SCREEN_HEIGHT+60,30,30,SDL_MapRGB(screen->format,25,255,25));
 
@@ -160,6 +183,7 @@ int main ( int argc, char** argv )
 
 		fpsDirect = 1000.0/chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-timeBefore).count();
 	}
+	TTF_CloseFont(police);
 	return 0;
 }
 
@@ -170,7 +194,7 @@ void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 		for(int i(0);i<m.getNetwork(j)->get_number_neuron();i++)
 		{
 			double value = m.getNetwork(j)->get_neuron(i)->get_value();
-			drawSquare(screen,SCREEN_WIDTH+30+j*60,50+i*60,40,40,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
+			drawSquare(screen,SCREEN_WIDTH+30+j*80,50+i*60,40,40,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
 		}
 	}
 }
