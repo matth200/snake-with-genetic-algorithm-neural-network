@@ -74,6 +74,8 @@ Snake::Snake(int w, int h)
 	m_w = w;
 	m_h = h;
 
+	init_time();
+
 	//init pour le jeu qui est appelé à chaque fois que le joueur perds
 	init();
 }
@@ -84,7 +86,7 @@ Snake::~Snake()
 
 void Snake::init()
 {
-	startTime = chrono::high_resolution_clock::now();	
+	
 	score = 0;
 	queue.clear();
 
@@ -116,6 +118,13 @@ void Snake::init()
 
 	//pour regler la vitesse du serpent
 	prevTime = chrono::high_resolution_clock::now();
+}
+
+void Snake::init_time()
+{
+	//tempss
+	startTime = chrono::high_resolution_clock::now();	
+	secondTime = chrono::high_resolution_clock::now();
 }
 
 void Snake::move(int a)
@@ -310,12 +319,21 @@ void Snake::set_speed(double v)
 		vitesse = v;
 } 
 
-void Snake::draw(SDL_Surface *screen)
+double Snake::get_time()
+{
+	return double(chrono::duration_cast<chrono::milliseconds>(secondTime-startTime).count()/1000.0);
+}
+
+void Snake::draw(SDL_Surface *screen, bool pause)
 {
 	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
 
 	//variable de la vitesse du serpent
 	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0*vitesse;
+	if(pause)
+	{
+		prevTime = chrono::high_resolution_clock::now();
+	}
 
 	//changement du max_score
 	if(score>max_score)
@@ -392,7 +410,9 @@ void Snake::draw(SDL_Surface *screen)
 
 	//on met dans un stringstream pour avoir que 3 décimals
 	stringstream streamTime;
-	streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-startTime).count()/1000.0; 
+	if(!pause)
+		secondTime = chrono::high_resolution_clock::now();
+	streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(secondTime-startTime).count()/1000.0; 
 
 	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+" ("+to_string(max_score)+")    temps : "+streamTime.str()+"s").c_str(),SDL_Color({255,255,255}));
 	SDL_Rect pos;

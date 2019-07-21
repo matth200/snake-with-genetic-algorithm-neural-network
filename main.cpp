@@ -54,13 +54,14 @@ int main ( int argc, char** argv )
 		return 1;
 	}
 
-	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",23);
+	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",20);
 
 	//variable pour la selection
 	vector<VarSelection> snakeSelection;
 
 	VarSelection tmpSelection;
 	tmpSelection.m.open(8);
+	bool selectionReady = 0;
 
 	// make sure SDL cleans up before exit
 	atexit(SDL_Quit);
@@ -81,7 +82,7 @@ int main ( int argc, char** argv )
 	SDL_Event event;
 
 	//IA snake
-	bool autonome = 0;
+	bool autonome = 1;
 
 	MachineLearning playerIA(8);
 	playerIA.addColumn(6);
@@ -94,20 +95,34 @@ int main ( int argc, char** argv )
 	//snake
 	Snake snake(60,60);
 
+	//genetic algorithm
+	int generation = 1, oldGeneration = 0;
+	SDL_Surface *texteGeneration = NULL;
+	SDL_Rect posTexte;
+	posTexte.x = SCREEN_WIDTH+10;
+	posTexte.y = SCREEN_HEIGHT+70;
+
+	VarSelection best_IA;
+	best_IA.score = 0;
+
 	//gestion du temps et des fps
 	double fpsDirect = 0.0;
 	time_point timeBefore, timeNow, timeFirst = chrono::high_resolution_clock::now();
 
 	while(continuer)
 	{
+		//on releve le temps pour controler les fps
 		timeBefore = chrono::high_resolution_clock::now();
+		//on fait une boucle de tous les événement qui se sont passé pendant notre absence
 		while(SDL_PollEvent(&event))
 		{
 			switch(event.type)
 			{
+				//pour quitter le logiciel
 				case SDL_QUIT:
 					continuer = 0;
 					break;
+				//control par les touches
 				case SDL_KEYDOWN:
 					if(!autonome){
 						switch(event.key.keysym.sym)
@@ -142,10 +157,11 @@ int main ( int argc, char** argv )
 		//vitesse du serpent
 		snake.set_speed(5);
 		
-		//mise à jour des informations dans le réseaux de neurone
+		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
 		playerIA.setInput(data);
 
+		//mise à jour des informations dans le réseaux de neurone
 		playerIA.calcul();
 		
 		//mouvement IA
@@ -159,20 +175,93 @@ int main ( int argc, char** argv )
 		drawNeuralNetwork(screen,playerIA);
 
 		//dessin des mouvements du serpent
-		snake.draw(screen);	
-
-		if(snake.gameover())
-		{
-			playerIA.setWeightRandom(500,500);
-		}
-
-		//barre qui sépare le score du jeu
-		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
-		drawSquare(screen,SCREEN_WIDTH,0,3,SCREEN_HEIGHT+SCREEN_HEIGHT,SDL_MapRGB(screen->format,255,255,255));
+		snake.draw(screen,selectionReady);	
 
 		//affichage du mode autonome
 		if(autonome)
 			drawSquare(screen,25,SCREEN_HEIGHT+60,30,30,SDL_MapRGB(screen->format,25,255,25));
+		if(selectionReady)
+			drawSquare(screen,25,SCREEN_HEIGHT+60,30,30,SDL_MapRGB(screen->format,200,100,25));
+
+		//barre qui sépare le score du jeu
+		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
+		drawSquare(screen,SCREEN_WIDTH,0,3,SCREEN_HEIGHT+OUTSCREEN_H,SDL_MapRGB(screen->format,255,255,255));
+
+		//on affiche les générations et le score de la meilleure IA
+		if(oldGeneration!=generation)
+		{
+			//on efface l'ancien texte
+			if(texteGeneration!=NULL)
+				SDL_FreeSurface(texteGeneration);
+			texteGeneration = TTF_RenderText_Solid(police,(string("Generation ")+(to_string(generation)+" best_IA score ")+to_string(best_IA.score)).c_str(),SDL_Color({255,255,255}));
+		}
+		SDL_BlitSurface(texteGeneration,NULL,screen,&posTexte);
+
+		//quand le serpent meurt
+		if(snake.gameover())
+		{
+			//selection
+			if(NBR_SELECTION>snakeSelection.size()&&autonome){
+				tmpSelection.score = int(1000.0*snake.get_time());
+				snake.init_time();
+				tmpSelection.m = playerIA;
+
+				snakeSelection.push_back(tmpSelection);
+			}
+			else if(autonome){
+				selectionReady = 1;
+
+				//selection
+				vector<VarSelection> comparaisonListe(NBR_SELECTION);
+				for(int i(0);i<NBR_SELECTION;i++)
+				{
+					comparaisonListe[i].score = 0;
+				}
+
+				//on mets dans l'ordre
+				bool done;
+				for(int j(0);j<snakeSelection.size();j++)
+				{
+					done = 0;
+					for(int i(0);i<comparaisonListe.size()&&!done;i++)
+					{
+						if(comparaisonListe[i].score<snakeSelection[j].score)
+						{
+							VarSelection transfer, newSelection = snakeSelection[j];
+							for(i;i<comparaisonListe.size();i++)
+							{
+								transfer = comparaisonListe[i];
+								comparaisonListe[i] = newSelection;
+								newSelection = transfer;
+							}
+							done = 1;
+						}
+					}
+				}
+				snakeSelection = comparaisonListe;
+
+				//on récupére le gagnant si il est meilleur que ceux des génération d'avant
+				if(snakeSelection[0].score>best_IA.score)
+					best_IA = snakeSelection[0];
+
+				//affichage de la liste
+				log << "liste rangé" << endl;
+				for(int i(0);i<snakeSelection.size();i++)
+				{
+					log << i << ": " << snakeSelection[i].score << " | ";
+				}
+				log << endl;
+
+				//create the new population
+
+				//effacement de la liste
+				generation++;
+				//selectionReady = 0;
+				//snakeSelection.clear();
+			}
+			//new player with random gene
+			playerIA.setWeightRandom(500,500);
+		}
 
 		//actualisation
 		SDL_Flip(screen);

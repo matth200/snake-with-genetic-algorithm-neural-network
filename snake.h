@@ -45,8 +45,10 @@ public:
 	Snake(int w, int h);
 	~Snake();
 	void init();
+	void init_time();
 	void move(int a);
 	void addQueue();
+	double get_time();
 	void set_speed(double v);
 	void newFood();
 	int get_score();
@@ -54,11 +56,11 @@ public:
 	char* getRangeWall();
 	bool collisionQueue(int x, int y);
 	bool collisionWall(int x, int y);
-	void draw(SDL_Surface *screen);
+	void draw(SDL_Surface *screen, bool pause);
 
 private:
 	std::vector<Pos> queue;
-	time_point prevTime, startTime;
+	time_point prevTime, startTime, secondTime;
 	Pos food;
 	int m_w, m_h;
 	char direction, oldDirection;
