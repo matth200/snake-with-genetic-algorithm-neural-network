@@ -27,6 +27,7 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 using namespace std;
 
 void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m);
+void makeBabys(MachineLearning &m1, MachineLearning &m2);
 
 //variable pour effectuer la selection
 struct VarSelection
@@ -90,13 +91,15 @@ int main ( int argc, char** argv )
 	playerIA.addColumn(4);
 
 	//random
-	playerIA.setWeightRandom(70,70);
+	playerIA.setWeightRandom(500,500);
 
 	//snake
 	Snake snake(60,60);
 
 	//genetic algorithm
 	int generation = 1, oldGeneration = 0;
+	int indexInPopulation = 0;
+
 	SDL_Surface *texteGeneration = NULL;
 	SDL_Rect posTexte;
 	posTexte.x = SCREEN_WIDTH+10;
@@ -142,12 +145,20 @@ int main ( int argc, char** argv )
 							case SDLK_RETURN:
 								autonome = 1;
 								break;
+
+							case SDLK_ESCAPE:
+								continuer = 0;
+								break;
 						}
 					}else{
 						switch(event.key.keysym.sym)
 						{
 							case SDLK_RETURN:
 								autonome = 0;
+								break;
+
+							case SDLK_ESCAPE:
+								continuer = 0;
 								break;
 						}
 					}
@@ -206,7 +217,10 @@ int main ( int argc, char** argv )
 				snake.init_time();
 				tmpSelection.m = playerIA;
 
-				snakeSelection.push_back(tmpSelection);
+				if(generation!=1&&indexInPopulation<8)
+					snakeSelection[indexInPopulation] = tmpSelection;
+				else	
+					snakeSelection.push_back(tmpSelection);
 			}
 			else if(autonome){
 				selectionReady = 1;
@@ -238,7 +252,10 @@ int main ( int argc, char** argv )
 						}
 					}
 				}
-				snakeSelection = comparaisonListe;
+				//selection des 8 meilleurs
+				snakeSelection.clear();
+				for(int i(0);i<8;i++)
+					snakeSelection.push_back(comparaisonListe[i]);
 
 				//on récupére le gagnant si il est meilleur que ceux des génération d'avant
 				if(snakeSelection[0].score>best_IA.score)
@@ -252,15 +269,39 @@ int main ( int argc, char** argv )
 				}
 				log << endl;
 
-				//create the new population
+				//create the babys
+				for(int i(0);i<int(snakeSelection.size()/2.0);i++)
+				{
+					makeBabys(snakeSelection[i*2].m,snakeSelection[i*2+1].m);
+				}
 
-				//effacement de la liste
+
+				//mutation
+				for(int i(0);i<snakeSelection.size();i++)
+				{
+					//select a random baby to affect some mutation
+				}
+
+
+				//on indique qu'on passe à la génération d'au dessus
 				generation++;
-				//selectionReady = 0;
-				//snakeSelection.clear();
 			}
-			//new player with random gene
-			playerIA.setWeightRandom(500,500);
+			//we increase the index
+			indexInPopulation++;
+			//on remets l'index de la population à 0 pour la prochaine génération
+			if(selectionReady)
+			{
+				indexInPopulation = 0;
+				//remet en route le jeu
+				selectionReady = 0;
+			}
+
+			//new player with random gene 
+			if(generation==1 || indexInPopulation>=8)
+  				playerIA.setWeightRandom(500,500);
+  			//we take in our list the new bays
+  			else
+  				playerIA = snakeSelection[indexInPopulation].m;
 		}
 
 		//actualisation
@@ -288,4 +329,11 @@ void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 			drawSquare(screen,SCREEN_WIDTH+30+j*80,50+i*60,40,40,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
 		}
 	}
+}
+
+void makeBabys(MachineLearning &m1, MachineLearning &m2)
+{
+	//get the adn 
+	vector<double> adn1, adn2;
+	//for(int i(0);i<)
 }
