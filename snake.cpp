@@ -128,6 +128,17 @@ void Snake::init_time()
 	score = 0;
 }
 
+void Snake::setMove(int m)
+{
+	init_move = m;
+	mouvements = m;
+}
+
+int Snake::getMove()
+{
+	return mouvements;
+}
+
 void Snake::move(int a)
 {
 	oldDirection = direction;
@@ -137,19 +148,31 @@ void Snake::move(int a)
 	{
 		case 0:
 			if(oldDirection!=1)
+			{
 				direction = (char)a;
+				mouvements--;
+			}
 			break;
 		case 1:
 			if(oldDirection!=0)
+			{
 				direction = (char)a;
+				mouvements--;
+			}
 			break;
 		case 2:
 			if(oldDirection!=3)
+			{
 				direction = (char)a;
+				mouvements--;
+			}
 			break;
 		case 3:
 			if(oldDirection!=2)
+			{
 				direction = (char)a; 
+				mouvements--;
+			}
 			break;
 	}
 }
@@ -160,6 +183,10 @@ void Snake::newFood()
 	do{ 
 		randomFood = rand()%(m_w*m_h);
 	}while(collisionQueue(randomFood%m_w,int(randomFood/m_w)));
+
+	mouvements = init_move+score*100;
+	if(mouvements>500)
+		mouvements=500;
 
 	//nouvelle nouriture
 	food.x = randomFood%m_w;
@@ -569,7 +596,7 @@ void Snake::draw(SDL_Surface *screen, bool pause)
 		Pos oldPos = queue[0];
 
 		//on bloque l'avancement si il y a un mur
-		if(!collisionWall(test.x,test.y)&&!collisionQueue(test.x,test.y))
+		if(!collisionWall(test.x,test.y)&&!collisionQueue(test.x,test.y)&&mouvements>0)
 		{
 			queue[0] = test;
 			//effacement de la map
@@ -600,7 +627,7 @@ void Snake::draw(SDL_Surface *screen, bool pause)
 		{
 			newFood();
 			addQueue();
-			score+=10;
+			score++;
 		}
 
 		prevTime=chrono::high_resolution_clock::now();

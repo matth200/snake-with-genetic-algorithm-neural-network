@@ -18,13 +18,17 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 #include "m_learning.h"
 
-#define FPS 30.0
+#define FPS 30
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 10
-#define FRQ_MUTATION 0.01
-#define MIXADN_CURSOR 0.2
-#define NBR_SELECTION 7
+#define NBR_POPULATION 400
+#define FRQ_MUTATION 0.05
+#define MIXADN_CURSOR 0.7
+#define NBR_SELECTION 100
+
+#define MOVES_LEFT 200
+
+#define RANDOM_VALUE 5
 
 using namespace std;
 
@@ -33,6 +37,7 @@ struct VarSelection
 {
 	MachineLearning m;
 	int score;
+	bool best;
 };
 
 
@@ -65,7 +70,7 @@ int main ( int argc, char** argv )
 	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",20);
 
 	//variable pour la selection
-	vector<VarSelection> snakeSelection;
+	vector<VarSelection> snakeSelection, playerSelection;
 
 	VarSelection tmpSelection;
 	bool selectionReady = 0;
@@ -90,21 +95,21 @@ int main ( int argc, char** argv )
 
 	//IA snake
 	bool autonome = 1;
-	bool bestPlayerInRoad = 0;
 
 	MachineLearning playerIA(24);
+	playerIA.addColumn(16);
 	playerIA.addColumn(16);
 	playerIA.addColumn(4);
 
 	//random
-	playerIA.setWeightRandom(100,100);
+	playerIA.setWeightRandom(RANDOM_VALUE,RANDOM_VALUE);
 
 	//snake
 	Snake snake(60,60);
+	snake.setMove(MOVES_LEFT);
 
 	//genetic algorithm
 	int generation = 1, oldGeneration = 0;
-	int indexInPopulation = 0;
 
 	SDL_Surface *texteGeneration = NULL;
 	SDL_Rect posTexte;
@@ -112,7 +117,9 @@ int main ( int argc, char** argv )
 	posTexte.y = SCREEN_HEIGHT+70;
 
 	VarSelection best_IA;
+	best_IA.m = playerIA;
 	best_IA.score = 0;
+	best_IA.best = 1;
 
 	//gestion du temps et des fps
 	double fpsDirect = 0.0;
@@ -133,53 +140,34 @@ int main ( int argc, char** argv )
 					break;
 				//control par les touches
 				case SDL_KEYDOWN:
-					if(!autonome){
-						switch(event.key.keysym.sym)
-						{
-							case SDLK_DOWN:
-								snake.move(3);
-								break;
-							case SDLK_UP:
-								snake.move(2);
-								break;
-							case SDLK_RIGHT:
-								snake.move(1);
-								break;
-							case SDLK_LEFT:
-								snake.move(0);
-								break;
-							case SDLK_RETURN:
-								autonome = 1;
-								break;
-
-							case SDLK_ESCAPE:
-								continuer = 0;
-								break;
-							case SDLK_SPACE:
-								bestPlayerInRoad = 1;
-								break;
-						}
-					}else{
-						switch(event.key.keysym.sym)
-						{
-							case SDLK_RETURN:
-								autonome = 0;
-								break;
-
-							case SDLK_ESCAPE:
-								continuer = 0;
-								break;
-							case SDLK_SPACE:
-								bestPlayerInRoad = 1;
-								break;
-						}
-					}
-					break;
-				case SDL_KEYUP:
 					switch(event.key.keysym.sym)
 					{
-						case SDLK_SPACE:
-							bestPlayerInRoad = 0;
+						case SDLK_DOWN:
+							if(!autonome){
+								snake.move(3);
+							}
+							break;
+						case SDLK_UP:
+							if(!autonome){
+								snake.move(2);
+							}
+							break;
+						case SDLK_RIGHT:
+							if(!autonome){
+								snake.move(1);
+							}
+							break;
+						case SDLK_LEFT:
+							if(!autonome){
+								snake.move(0);
+							}
+							break;
+
+						case SDLK_RETURN:
+							autonome = 1;
+							break;
+						case SDLK_ESCAPE:
+							continuer = 0;
 							break;
 					}
 					break;
@@ -190,14 +178,7 @@ int main ( int argc, char** argv )
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 
 		//vitesse du serpent
-		snake.set_speed(3);
-
-		if(bestPlayerInRoad)
-		{
-			//autonome = 0;
-			//playerIA = best_IA.m;
-			drawSquare(screen,25,SCREEN_HEIGHT+60,30,30,SDL_MapRGB(screen->format,200,100,25));
-		}
+		snake.set_speed(30);
 		
 		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
@@ -242,16 +223,14 @@ int main ( int argc, char** argv )
 		//quand le serpent meurt
 		if(snake.gameover())
 		{
+			snake.setMove(MOVES_LEFT);
 			//selection
-			if(NBR_POPULATION>snakeSelection.size()&&autonome){
-				tmpSelection.score = int(1000.0*snake.get_time()+snake.get_score()*1000.0);
+			if(NBR_POPULATION>playerSelection.size()&&autonome){
+				tmpSelection.score = int(1000.0*snake.get_time()+10000.0*snake.get_score());
 				snake.init_time();
 				tmpSelection.m = playerIA;
-
-				if(generation!=1&&indexInPopulation<NBR_SELECTION+1)
-					snakeSelection[indexInPopulation] = tmpSelection;
-				else	
-					snakeSelection.push_back(tmpSelection);
+				tmpSelection.best = 0;
+				playerSelection.push_back(tmpSelection);
 			}
 			else if(autonome){
 				selectionReady = 1;
@@ -261,7 +240,10 @@ int main ( int argc, char** argv )
 				for(int i(0);i<NBR_POPULATION;i++)
 				{
 					comparaisonListe[i].score = 0;
+					comparaisonListe[i].best = 0;
 				}
+				snakeSelection = playerSelection;
+				playerSelection.clear();
 
 				//on mets dans l'ordre
 				bool done;
@@ -286,29 +268,44 @@ int main ( int argc, char** argv )
 
 				//on récupére le gagnant si il est meilleur que ceux des génération d'avant
 				if(comparaisonListe[0].score>best_IA.score)
+				{
+					comparaisonListe[0].best = 1;
 					best_IA = comparaisonListe[0];
+				}
 
 				//affichage de la liste
-				/*
 				log << "generation " << generation << endl;
 				for(int i(0);i<comparaisonListe.size();i++)
 				{
 					log << i << ": " << comparaisonListe[i].score << " | ";
 				}
 				log << endl;
-				*/
 
 				//selection and create babys finally
-				vector<VarSelection> copy = comparaisonListe;
+				vector<VarSelection> copy;
 				snakeSelection.clear();
+
+				//selection des meilleurs
+				for(int i(0);i<NBR_SELECTION;i++)
+					copy.push_back(comparaisonListe[i]);
 
 				while(snakeSelection.size()<NBR_SELECTION)
 				{
 					VarSelection parent1 = selectionRandomly(copy), parent2 = selectionRandomly(copy);
 
+					snakeSelection.push_back(parent1);
+					snakeSelection.push_back(parent2);
+
 					//parents become babyssss
 					makeBabys(parent1.m,parent2.m);
 
+					//init babys
+					parent1.best=0;
+					parent2.best=0;
+					parent1.score=0;
+					parent2.score=0;
+
+					//ajout dans la liste
 					snakeSelection.push_back(parent1);
 					snakeSelection.push_back(parent2);
 				}
@@ -317,58 +314,49 @@ int main ( int argc, char** argv )
 				//mutation
 				for(int i(0);i<snakeSelection.size();i++)
 				{
-					//we see if there is a mutation or not
-
 					//get adn
 					vector<double> adn;
 					getAdn(snakeSelection[i].m,adn);
 
 					//we gonna mutate this babyyyy
-					const int randomNumber = 10;
+					const int randomNumber = RANDOM_VALUE;
 					for(int j(0);j<adn.size();j++){
-						if(rand()%101<FRQ_MUTATION*100.0)
+						if(rand()%10100<FRQ_MUTATION*10000.0)
 						{
 							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
+							log << "muté ,";
 						}
-						log << "muté ,";
 					}
 					log << endl;
 					//set adn
-					setAdn(snakeSelection[i].m,adn);
+					setAdn(comparaisonListe[i].m,adn);
 				}
 
 				log << "mutation okay " << endl;
 
 				//on met le premier sans mutation
-				VarSelection copyBest = best_IA;
-				copyBest.score = 0;
-				snakeSelection.push_back(copyBest);
-
-
-				//log << "taille snakeSelection" << snakeSelection.size() << endl;
+				snakeSelection.push_back(best_IA);
 
 				//on indique qu'on passe à la génération d'au dessus
 				generation++;
-			}
-			//we increase the index
-			indexInPopulation++;
-			//on remets l'index de la population à 0 pour la prochaine génération
-			if(selectionReady)
-			{
-				indexInPopulation = 0;
-				//remet en route le jeu
 				selectionReady = 0;
 			}
 
 			//new player with random gene 
-			if(generation==1 || indexInPopulation>=NBR_SELECTION+1)
-  				playerIA.setWeightRandom(10,10);
-  			//we take in our list the new bays
-  			else
-  			{
-  				playerIA = snakeSelection[indexInPopulation].m;
-  				log << "iA number : " << indexInPopulation << endl;
-  			}
+			if(snakeSelection.size()>0)
+			{
+				playerIA = snakeSelection[0].m;
+				if(snakeSelection[0].best)
+					log << "bestPlayer play" << endl;
+				snakeSelection.erase(snakeSelection.begin());
+
+				log << "Babys Player" << endl;
+			}
+			else
+			{
+  				playerIA.setWeightRandom(RANDOM_VALUE,RANDOM_VALUE);
+  				log << "Random Player" << endl;
+			}
 		}
 
 		//actualisation

@@ -46,6 +46,8 @@ public:
 	~Snake();
 	void init();
 	void init_time();
+	void setMove(int m);
+	int getMove();
 	void move(int a);
 	void addQueue();
 	double get_time();
@@ -66,6 +68,7 @@ private:
 	time_point prevTime, startTime, secondTime;
 	Pos food;
 	int m_w, m_h;
+	int mouvements, init_move;
 	char direction, oldDirection;
 	std::vector<char> map;
 	int score, max_score;
