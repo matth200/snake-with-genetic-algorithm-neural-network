@@ -45,9 +45,10 @@ public:
 	Snake(int w, int h);
 	~Snake();
 	void init();
-	void init_time();
+	void init_after();
 	void setMove(int m);
 	int getMove();
+	int get_step();
 	void move(int a);
 	void addQueue();
 	double get_time();
@@ -61,7 +62,7 @@ public:
 	bool collisionQueue(int x, int y);
 	bool collisionWall(int x, int y);
 	bool collisionFood(int x, int y);
-	void draw(SDL_Surface *screen, bool pause);
+	void draw(SDL_Surface *screen, bool noanimation = 0);
 
 private:
 	std::vector<Pos> queue;
@@ -69,9 +70,9 @@ private:
 	Pos food;
 	int m_w, m_h;
 	int mouvements, init_move;
-	char direction, oldDirection;
+	char direction, oldDirection, beforeDirection;
 	std::vector<char> map;
-	int score, max_score;
+	int score, max_score, step;
 	TTF_Font *police;
 	bool m_over;
 	double vitesse;

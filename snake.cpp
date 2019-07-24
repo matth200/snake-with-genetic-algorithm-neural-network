@@ -74,7 +74,7 @@ Snake::Snake(int w, int h)
 	m_w = w;
 	m_h = h;
 
-	init_time();
+	init_after();
 
 	//init pour le jeu qui est appelé à chaque fois que le joueur perds
 	init();
@@ -105,6 +105,7 @@ void Snake::init()
 
 	//pour controller la direction du serpent
 	direction = 3;
+	beforeDirection = 3;
 	oldDirection = 0;
 
 	//tableau dynamique qui contient les données de la map
@@ -118,7 +119,7 @@ void Snake::init()
 	prevTime = chrono::high_resolution_clock::now();
 }
 
-void Snake::init_time()
+void Snake::init_after()
 {
 	//tempss
 	startTime = chrono::high_resolution_clock::now();	
@@ -126,6 +127,9 @@ void Snake::init_time()
 
 	//Score
 	score = 0;
+
+	//step
+	step = 0;
 }
 
 void Snake::setMove(int m)
@@ -148,31 +152,19 @@ void Snake::move(int a)
 	{
 		case 0:
 			if(oldDirection!=1)
-			{
 				direction = (char)a;
-				mouvements--;
-			}
 			break;
 		case 1:
 			if(oldDirection!=0)
-			{
 				direction = (char)a;
-				mouvements--;
-			}
 			break;
 		case 2:
 			if(oldDirection!=3)
-			{
 				direction = (char)a;
-				mouvements--;
-			}
 			break;
 		case 3:
 			if(oldDirection!=2)
-			{
-				direction = (char)a; 
-				mouvements--;
-			}
+				direction = (char)a;
 			break;
 	}
 }
@@ -555,28 +547,42 @@ double Snake::get_time()
 	return double(chrono::duration_cast<chrono::milliseconds>(secondTime-startTime).count()/1000.0);
 }
 
-void Snake::draw(SDL_Surface *screen, bool pause)
+int Snake::get_step()
+{
+	return step;
+}
+
+void Snake::draw(SDL_Surface *screen, bool noanimation)
 {
 	int w = SCREEN_WIDTH/m_w, h = SCREEN_HEIGHT/m_h;
 
 	//variable de la vitesse du serpent
 	double run = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now()-prevTime).count()/50.0*vitesse;
-	if(pause)
-	{
-		prevTime = chrono::high_resolution_clock::now();
-	}
+
+	//on met run à 1 pour que les cases avancent tous le temps de 1 à chaque appel de fonction
+	if(noanimation)
+		run = 1;
 
 	//changement du max_score
 	if(score>max_score)
 		max_score = score;
 
 	//fooddd
-	drawSquare(screen,food.x*w,food.y*h,w,h,SDL_MapRGB(screen->format,255,25,25));
+	if(!noanimation)
+		drawSquare(screen,food.x*w,food.y*h,w,h,SDL_MapRGB(screen->format,255,25,25));
 
 	//changement des positions des cases
-	if(run>1.0)
+	if(run>=1.0)
 	{
+		step++;
 		Pos test = queue[0];
+
+		//changements de direction
+		if(beforeDirection!=direction)
+			mouvements--;
+		beforeDirection = direction;
+
+		//on applique le mouvement par rapport à la direction voulu
 		switch(direction)
 		{
 			case 0:
@@ -618,6 +624,17 @@ void Snake::draw(SDL_Surface *screen, bool pause)
 		//si le joueur perds
 		else
 		{
+			//affichage de la cause
+			if(!noanimation)
+			{
+				if(mouvements<=0)
+					log2 << "mort par mouvement trop intense" << endl;
+				else if(collisionQueue(test.x,test.y))
+					log2 << "mort par collision de la Queue" << endl;
+				else if(collisionWall(test.x,test.y))
+					log2 << "mort par collision sur un mur" << endl;
+			}
+
 			init();
 			m_over = 1;
 		}
@@ -633,22 +650,25 @@ void Snake::draw(SDL_Surface *screen, bool pause)
 		prevTime=chrono::high_resolution_clock::now();
 	}
 
-	//dessin des cases
-	for(int i(0);i<queue.size();i++)
-		drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGBA(screen->format,200,200,200,100));
+	//si il n'y a pas d'animation on s'en fout
+	if(!noanimation)
+	{
+		//dessin des cases
+		for(int i(0);i<queue.size();i++)
+			drawSquare(screen,queue[i].x*w,queue[i].y*h,w,h,SDL_MapRGBA(screen->format,200,200,200,100));
 
-	//AFFICHAGE DU SCORE
+		//AFFICHAGE DU SCORE
 
-	//on met dans un stringstream pour avoir que 3 décimals
-	stringstream streamTime;
-	if(!pause)
-		secondTime = chrono::high_resolution_clock::now();
-	streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(secondTime-startTime).count()/1000.0; 
+		//on met dans un stringstream pour avoir que 3 décimals
+		//stringstream streamTime;
+		//streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(secondTime-startTime).count()/1000.0; 
 
-	SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+" ("+to_string(max_score)+")    temps : "+streamTime.str()+"s").c_str(),SDL_Color({255,255,255}));
-	SDL_Rect pos;
-	pos.y = SCREEN_HEIGHT+25;
-	pos.x = 25;
-	SDL_BlitSurface(texte,NULL,screen,&pos);
-	SDL_FreeSurface(texte);
+		SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+" ("+to_string(max_score)+")    step : "+to_string(mouvements)).c_str(),SDL_Color({255,255,255}));
+		SDL_Rect pos;
+		pos.y = SCREEN_HEIGHT+25;
+		pos.x = 25;
+		SDL_BlitSurface(texte,NULL,screen,&pos);
+		SDL_FreeSurface(texte);
+
+	}
 }

@@ -22,11 +22,11 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 //parametre GENETIC_ALGORITHM
 #define NBR_POPULATION 100
-#define FRQ_MUTATION 0.6
+#define FRQ_MUTATION 0.4
 #define MIXADN_CURSOR 0.5
-#define NBR_SELECTION 20
+#define NBR_SELECTION 40
 
-#define MOVES_LEFT 400
+#define MOVES_LEFT 100
 
 #define RANDOM_VALUE 100
 
@@ -180,7 +180,7 @@ int main ( int argc, char** argv )
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 
 		//vitesse du serpent
-		snake.set_speed(100);
+		snake.set_speed(3);
 		
 		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
@@ -196,13 +196,12 @@ int main ( int argc, char** argv )
 		//mouvement IA
 		if(autonome)
 			snake.move(playerIA.getPrediction());
-
 		
 		//on affiche les infos du réseaux de neurone
 		drawNeuralNetwork(screen,playerIA);
 
 		//dessin des mouvements du serpent
-		snake.draw(screen,selectionReady);	
+		snake.draw(screen);	
 
 		//affichage du mode autonome
 		if(autonome)
@@ -225,16 +224,59 @@ int main ( int argc, char** argv )
 		//quand le serpent meurt
 		if(snake.gameover())
 		{
-			snake.setMove(MOVES_LEFT);
-			//selection
-			if(NBR_POPULATION>playerSelection.size()&&autonome){
-				tmpSelection.score = int(snake.get_time()*1000+pow(snake.get_score()*10,2)*100);
-				snake.init_time();
+			//on fait jouer les IA en arrière plan
+			while(NBR_POPULATION>playerSelection.size()&&autonome)
+			{
+				tmpSelection.score = int(snake.get_step()+pow(snake.get_score()*10,2)*100);
+				snake.init_after();
 				tmpSelection.m = playerIA;
 				tmpSelection.best = 0;
 				playerSelection.push_back(tmpSelection);
+
+				//on init le nouveau joueur
+				snake.setMove(MOVES_LEFT);
+
+				if(NBR_POPULATION>playerSelection.size())
+				{
+					//old player 
+					if(snakeSelection.size()>0){
+						playerIA = snakeSelection[0].m;
+						if(snakeSelection[0].best)
+							log << "bestPlayer play" << endl;
+						snakeSelection.erase(snakeSelection.begin());
+
+						log << "Babys Player" << endl;
+					}
+					//new player with random gene 
+					else{
+							playerIA.setWeightRandom(RANDOM_VALUE,RANDOM_VALUE);
+							log << "Random Player" << endl;
+					}
+
+					//tant qu'il n'a pas perdu il joue
+					while(!snake.gameover())
+					{
+						//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
+						char *data = snake.getRangeWall();
+						playerIA.setInput(data,8,0);
+						data = snake.getRangeQueue();
+						playerIA.setInput(data,8,8);
+						data = snake.getRangeFood();
+						playerIA.setInput(data,8,16);
+
+						//mise à jour des informations dans le réseaux de neurone
+						playerIA.calcul();
+
+						//ensuite l'IA choisit la direction
+						snake.move(playerIA.getPrediction());
+
+						//on bouge le serpent de un bloc
+						snake.draw(screen,1);
+					}
+				}
 			}
-			else if(autonome){
+			//on manipule la population pour obtenir de meilleur résultat
+			if(autonome&&NBR_POPULATION<=playerSelection.size()){
 				selectionReady = 1;
 
 				//selection
@@ -283,12 +325,14 @@ int main ( int argc, char** argv )
 				}
 				log << endl;
 
-				//selection and create babys finally
-				vector<VarSelection> copy = snakeSelection;
+
 				snakeSelection.clear();
 
 				for(int i(0);i<NBR_SELECTION;i++)
 					snakeSelection.push_back(comparaisonListe[i]);
+
+				//selection and create babys finally
+				vector<VarSelection> copy = snakeSelection;
 
 				while(snakeSelection.size()<NBR_SELECTION*2.0)
 				{
@@ -322,18 +366,18 @@ int main ( int argc, char** argv )
 						if(rand()%1000<FRQ_MUTATION*1000.0)
 						{
 							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
-							log << "muté ,";
+							log << "M";
 						}
 					}
-					log << endl;
+					log << " & " << endl;
 					//set adn
-					setAdn(comparaisonListe[i].m,adn);
+					setAdn(snakeSelection[i].m,adn);
 				}
 
 				log << "mutation okay " << endl;
 
 				//on met le premier sans mutation
-				snakeSelection.push_back(best_IA);
+				//snakeSelection.push_back(best_IA);
 
 				log << "number of neural network in the snakeSelection  " << snakeSelection.size() << endl;
 
@@ -342,21 +386,19 @@ int main ( int argc, char** argv )
 				selectionReady = 0;
 			}
 
-			//new player with random gene 
-			if(snakeSelection.size()>0)
-			{
-				playerIA = snakeSelection[0].m;
-				if(snakeSelection[0].best)
-					log << "bestPlayer play" << endl;
-				snakeSelection.erase(snakeSelection.begin());
+			//on initialise le snake
+			snake.init();
+			snake.init_after();
+			
+			snake.setMove(MOVES_LEFT);
 
-				log << "Babys Player" << endl;
-			}
-			else
-			{
-  				playerIA.setWeightRandom(RANDOM_VALUE,RANDOM_VALUE);
-  				log << "Random Player" << endl;
-			}
+			//on sélectionne le premier de la liste pour le faire jouer à l'écran
+			playerIA = snakeSelection[0].m;
+			if(snakeSelection[0].best)
+				log << "bestPlayer play" << endl;
+			snakeSelection.erase(snakeSelection.begin());
+
+			log << "Babys Player to the screen" << endl;
 		}
 
 		//actualisation
