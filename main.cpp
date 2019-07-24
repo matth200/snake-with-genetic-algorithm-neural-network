@@ -21,14 +21,14 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 400
-#define FRQ_MUTATION 0.05
-#define MIXADN_CURSOR 0.7
-#define NBR_SELECTION 100
+#define NBR_POPULATION 100
+#define FRQ_MUTATION 0.6
+#define MIXADN_CURSOR 0.5
+#define NBR_SELECTION 20
 
-#define MOVES_LEFT 200
+#define MOVES_LEFT 400
 
-#define RANDOM_VALUE 5
+#define RANDOM_VALUE 100
 
 using namespace std;
 
@@ -97,8 +97,7 @@ int main ( int argc, char** argv )
 	bool autonome = 1;
 
 	MachineLearning playerIA(24);
-	playerIA.addColumn(16);
-	playerIA.addColumn(16);
+	playerIA.addColumn(18);
 	playerIA.addColumn(4);
 
 	//random
@@ -164,7 +163,10 @@ int main ( int argc, char** argv )
 							break;
 
 						case SDLK_RETURN:
-							autonome = 1;
+							if(autonome)
+								autonome = 0;
+							else
+								autonome = 1;
 							break;
 						case SDLK_ESCAPE:
 							continuer = 0;
@@ -178,7 +180,7 @@ int main ( int argc, char** argv )
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 
 		//vitesse du serpent
-		snake.set_speed(30);
+		snake.set_speed(100);
 		
 		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
@@ -226,7 +228,7 @@ int main ( int argc, char** argv )
 			snake.setMove(MOVES_LEFT);
 			//selection
 			if(NBR_POPULATION>playerSelection.size()&&autonome){
-				tmpSelection.score = int(1000.0*snake.get_time()+10000.0*snake.get_score());
+				tmpSelection.score = int(snake.get_time()*1000+pow(snake.get_score()*10,2)*100);
 				snake.init_time();
 				tmpSelection.m = playerIA;
 				tmpSelection.best = 0;
@@ -282,28 +284,24 @@ int main ( int argc, char** argv )
 				log << endl;
 
 				//selection and create babys finally
-				vector<VarSelection> copy;
+				vector<VarSelection> copy = snakeSelection;
 				snakeSelection.clear();
 
-				//selection des meilleurs
 				for(int i(0);i<NBR_SELECTION;i++)
-					copy.push_back(comparaisonListe[i]);
+					snakeSelection.push_back(comparaisonListe[i]);
 
-				while(snakeSelection.size()<NBR_SELECTION)
+				while(snakeSelection.size()<NBR_SELECTION*2.0)
 				{
 					VarSelection parent1 = selectionRandomly(copy), parent2 = selectionRandomly(copy);
-
-					snakeSelection.push_back(parent1);
-					snakeSelection.push_back(parent2);
-
-					//parents become babyssss
-					makeBabys(parent1.m,parent2.m);
-
+					
 					//init babys
 					parent1.best=0;
 					parent2.best=0;
 					parent1.score=0;
 					parent2.score=0;
+
+					//parents become babyssss
+					makeBabys(parent1.m,parent2.m);
 
 					//ajout dans la liste
 					snakeSelection.push_back(parent1);
@@ -321,7 +319,7 @@ int main ( int argc, char** argv )
 					//we gonna mutate this babyyyy
 					const int randomNumber = RANDOM_VALUE;
 					for(int j(0);j<adn.size();j++){
-						if(rand()%10100<FRQ_MUTATION*10000.0)
+						if(rand()%1000<FRQ_MUTATION*1000.0)
 						{
 							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
 							log << "muté ,";
@@ -336,6 +334,8 @@ int main ( int argc, char** argv )
 
 				//on met le premier sans mutation
 				snakeSelection.push_back(best_IA);
+
+				log << "number of neural network in the snakeSelection  " << snakeSelection.size() << endl;
 
 				//on indique qu'on passe à la génération d'au dessus
 				generation++;
@@ -393,15 +393,19 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 	//pour qu'il prenne les meme réseaux de neurone
 	getAdn(m1,adn1);
 	getAdn(m2,adn2);
+	ofstream log("logBabys.txt");
 
 	//mix the adn <<<----
+	log << "adn |";
 	for(int i(0);i<adn1.size();i++)
 	{
-		if(i<adn1.size()*MIXADN_CURSOR)
+		if(rand()%1000<MIXADN_CURSOR*1000.0)
 		{
+			log << "O";
 			adnT1.push_back(adn1[i]);
 			adnT2.push_back(adn2[i]);
 		}else{
+			log << "M";
 			adnT1.push_back(adn2[i]);
 			adnT2.push_back(adn1[i]);
 		}
