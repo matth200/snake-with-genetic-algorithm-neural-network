@@ -174,7 +174,7 @@ void Snake::newFood()
 	int randomFood = 0;
 	do{ 
 		randomFood = rand()%(m_w*m_h);
-	}while(collisionQueue(randomFood%m_w,int(randomFood/m_w)));
+	}while(collisionQueue(randomFood%m_w,int(randomFood/m_w))||(queue[0].x==randomFood%m_w&&queue[0].y==int(randomFood/m_w)));
 
 	mouvements = init_move+score*100;
 	if(mouvements>500)

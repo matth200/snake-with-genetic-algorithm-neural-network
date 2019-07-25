@@ -22,11 +22,11 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 //parametre GENETIC_ALGORITHM
 #define NBR_POPULATION 100
-#define FRQ_MUTATION 0.4
+#define FRQ_MUTATION 0.02
 #define MIXADN_CURSOR 0.5
 #define NBR_SELECTION 40
 
-#define MOVES_LEFT 100
+#define MOVES_LEFT 200
 
 #define RANDOM_VALUE 100
 
@@ -363,7 +363,7 @@ int main ( int argc, char** argv )
 					//we gonna mutate this babyyyy
 					const int randomNumber = RANDOM_VALUE;
 					for(int j(0);j<adn.size();j++){
-						if(rand()%1000<FRQ_MUTATION*1000.0)
+						if(rand()%1000+1<=FRQ_MUTATION*1000.0)
 						{
 							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
 							log << "M";
@@ -476,7 +476,7 @@ void getAdn(MachineLearning &m, vector<double> &adn)
 
 void setAdn(MachineLearning &m, vector<double> &adn)
 {
-	int index = 1;
+	int index = 0;
 	for(int l(0);l<m.getNumberColumn()-1;l++)
 	{
 		for(int j(0);j<m.getNetwork(l+1)->get_number_neuron();j++)
