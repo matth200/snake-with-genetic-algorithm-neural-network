@@ -21,10 +21,10 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 100
+#define NBR_POPULATION 200
 #define FRQ_MUTATION 0.02
-#define MIXADN_CURSOR 0.5
-#define NBR_SELECTION 40
+#define MIXADN_CURSOR 0.7
+#define NBR_SELECTION 70
 
 #define MOVES_LEFT 200
 
@@ -92,6 +92,8 @@ int main ( int argc, char** argv )
 	//main loop
 	bool continuer = 1;
 	SDL_Event event;
+	int speed = 3;
+	bool buttonSpeed = 0;
 
 	//IA snake
 	bool autonome = 1;
@@ -141,22 +143,22 @@ int main ( int argc, char** argv )
 				case SDL_KEYDOWN:
 					switch(event.key.keysym.sym)
 					{
-						case SDLK_DOWN:
+						case SDLK_s:
 							if(!autonome){
 								snake.move(3);
 							}
 							break;
-						case SDLK_UP:
+						case SDLK_z:
 							if(!autonome){
 								snake.move(2);
 							}
 							break;
-						case SDLK_RIGHT:
+						case SDLK_d:
 							if(!autonome){
 								snake.move(1);
 							}
 							break;
-						case SDLK_LEFT:
+						case SDLK_q:
 							if(!autonome){
 								snake.move(0);
 							}
@@ -171,6 +173,33 @@ int main ( int argc, char** argv )
 						case SDLK_ESCAPE:
 							continuer = 0;
 							break;
+						case SDLK_RIGHT:
+							if(!buttonSpeed)
+							{
+								speed++;
+								buttonSpeed = 1;
+							}
+							break;
+						case SDLK_LEFT:
+							if(!buttonSpeed)
+							{
+								if(speed>1)
+									speed--;
+								buttonSpeed = 1;
+							}
+							break;
+					}
+					break;
+
+				case SDL_KEYUP:
+					switch(event.key.keysym.sym)
+					{
+						case SDLK_RIGHT:
+							buttonSpeed = 0;
+							break;
+						case SDLK_LEFT:
+							buttonSpeed = 0;
+							break;
 					}
 					break;
 			}
@@ -180,7 +209,7 @@ int main ( int argc, char** argv )
 		SDL_FillRect(screen,NULL,SDL_MapRGB(screen->format,0,0,0));
 
 		//vitesse du serpent
-		snake.set_speed(3);
+		snake.set_speed(speed);
 		
 		//on entre les distances de la tete du serpent par rapport au mur dans 8 directions dans le réseaux de neurone
 		char *data = snake.getRangeWall();
@@ -377,7 +406,7 @@ int main ( int argc, char** argv )
 				log << "mutation okay " << endl;
 
 				//on met le premier sans mutation
-				//snakeSelection.push_back(best_IA);
+				snakeSelection.push_back(best_IA);
 
 				log << "number of neural network in the snakeSelection  " << snakeSelection.size() << endl;
 
