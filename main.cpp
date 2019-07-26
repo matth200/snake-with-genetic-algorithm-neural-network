@@ -21,14 +21,14 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 200
-#define FRQ_MUTATION 0.02
-#define MIXADN_CURSOR 0.7
-#define NBR_SELECTION 70
+#define NBR_POPULATION 500
+#define FRQ_MUTATION 0.05
+#define NBR_BADSELECTION 10
+#define NBR_SELECTION 100
 
 #define MOVES_LEFT 200
 
-#define RANDOM_VALUE 100
+#define RANDOM_VALUE 2
 
 using namespace std;
 
@@ -188,6 +188,9 @@ int main ( int argc, char** argv )
 								buttonSpeed = 1;
 							}
 							break;
+						case SDLK_DOWN:
+							speed = 3;
+							break;
 					}
 					break;
 
@@ -256,7 +259,7 @@ int main ( int argc, char** argv )
 			//on fait jouer les IA en arrière plan
 			while(NBR_POPULATION>playerSelection.size()&&autonome)
 			{
-				tmpSelection.score = int(snake.get_step()+pow(snake.get_score()*10,2)*100);
+				tmpSelection.score = int(snake.get_step()*10+10000*snake.get_score());
 				snake.init_after();
 				tmpSelection.m = playerIA;
 				tmpSelection.best = 0;
@@ -356,14 +359,25 @@ int main ( int argc, char** argv )
 
 
 				snakeSelection.clear();
+				vector<VarSelection> copy = comparaisonListe;
 
+				//selection best parent
 				for(int i(0);i<NBR_SELECTION;i++)
 					snakeSelection.push_back(comparaisonListe[i]);
 
-				//selection and create babys finally
-				vector<VarSelection> copy = snakeSelection;
+				//selection the bad parents
+				for(int i(0);i<NBR_SELECTION;i++)
+					copy.erase(copy.begin());
 
-				while(snakeSelection.size()<NBR_SELECTION*2.0)
+				for(int i(0);i<NBR_BADSELECTION;i++)
+					snakeSelection.push_back(selectionRandomly(copy));
+
+				log << "size snakeSelection " << snakeSelection.size() << endl;
+
+				//selection and create babys finally
+				copy = snakeSelection;
+
+				while(snakeSelection.size()<int(NBR_SELECTION*2.0))
 				{
 					VarSelection parent1 = selectionRandomly(copy), parent2 = selectionRandomly(copy);
 					
@@ -383,7 +397,7 @@ int main ( int argc, char** argv )
 				log << "create babys okay" << endl;
 
 				//mutation
-				for(int i(0);i<snakeSelection.size();i++)
+				for(int i(1);i<snakeSelection.size();i++)
 				{
 					//get adn
 					vector<double> adn;
@@ -406,7 +420,7 @@ int main ( int argc, char** argv )
 				log << "mutation okay " << endl;
 
 				//on met le premier sans mutation
-				snakeSelection.push_back(best_IA);
+				//snakeSelection.push_back(comparaisonListe[0]);
 
 				log << "number of neural network in the snakeSelection  " << snakeSelection.size() << endl;
 
@@ -447,12 +461,20 @@ int main ( int argc, char** argv )
 
 void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 {
+	int size = 24;
 	for(int j(0);j<m.getNumberColumn();j++)
 	{
 		for(int i(0);i<m.getNetwork(j)->get_number_neuron();i++)
 		{
 			double value = m.getNetwork(j)->get_neuron(i)->get_value();
-			drawSquare(screen,SCREEN_WIDTH+30+j*60,50+i*30,20,20,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
+			drawSquare(screen,SCREEN_WIDTH+100+j*100,50+((size-m.getNetwork(j)->get_number_neuron())/2.0+i)*30,20,20,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
+			for(int a(0);a<m.getNetwork(j)->get_neuron(i)->numberConnection()&&j!=0;a++)
+			{
+				Uint32 color = SDL_MapRGB(screen->format,25,25,200);
+				if(m.getNetwork(j)->get_neuron(i)->get_weight(a)<0)
+					color = SDL_MapRGB(screen->format,200,25,25);
+				drawLine(screen,SCREEN_WIDTH+100+(j-1)*100+20,50+((size-m.getNetwork(j-1)->get_number_neuron())/2.0+a)*30+10,SCREEN_WIDTH+100+j*100,50+((size-m.getNetwork(j)->get_number_neuron())/2.0+i)*30+10,color);
+			}
 		}
 	}
 }
@@ -468,9 +490,10 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 
 	//mix the adn <<<----
 	log << "adn |";
+	int cursor = rand()%adn1.size();
 	for(int i(0);i<adn1.size();i++)
 	{
-		if(rand()%1000<MIXADN_CURSOR*1000.0)
+		if(i<cursor)
 		{
 			log << "O";
 			adnT1.push_back(adn1[i]);
@@ -560,8 +583,8 @@ VarSelection selectionRandomly(vector<VarSelection> &players)
 		}
 		valeurCum+=players[i].score;
 	}
-	VarSelection copy;
-	return copy;
+	players.erase(players.begin());
+	return players[0];
 }
 
 double distance(int x1, int y1, int x2, int y2)

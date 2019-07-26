@@ -47,6 +47,7 @@ public:
 	void init();
 	void init_after();
 	void setMove(int m);
+	int getMoveLeft();
 	int getMove();
 	int get_step();
 	void move(int a);
@@ -56,9 +57,9 @@ public:
 	void newFood();
 	int get_score();
 	bool gameover();
-	char* getRangeWall();
-	char* getRangeQueue();
-	char* getRangeFood();
+	char* getRangeWall(SDL_Surface *screen = NULL);
+	char* getRangeQueue(SDL_Surface *screen = NULL);
+	char* getRangeFood(SDL_Surface *screen = NULL);
 	bool collisionQueue(int x, int y);
 	bool collisionWall(int x, int y);
 	bool collisionFood(int x, int y);
@@ -69,7 +70,7 @@ private:
 	time_point prevTime, startTime, secondTime;
 	Pos food;
 	int m_w, m_h;
-	int mouvements, init_move;
+	int mouvements, init_move, move_left;
 	char direction, oldDirection, beforeDirection;
 	std::vector<char> map;
 	int score, max_score, step;
