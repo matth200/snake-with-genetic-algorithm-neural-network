@@ -24,7 +24,7 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
-#define OUTSCREEN_W 400
+#define OUTSCREEN_W 500
 #define OUTSCREEN_H 100
 
 struct Pos{
