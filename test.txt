@@ -1,1 +1,5 @@
 salut
+
+
+master ---> develop ---> personne 2
+                    ---> personne 1
