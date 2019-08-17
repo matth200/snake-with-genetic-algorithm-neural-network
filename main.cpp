@@ -21,7 +21,7 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 200
+#define NBR_POPULATION 10
 #define FRQ_MUTATION 0.02
 #define MIXADN_CURSOR 0.7
 #define NBR_SELECTION 70
