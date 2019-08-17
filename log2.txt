@@ -3,7 +3,10 @@ mort par collision sur un mur
 mort par collision de la Queue
 mort par collision de la Queue
 mort par collision sur un mur
+<<<<<<< HEAD
 mort par collision sur un mur
 mort par collision de la Queue
 mort par collision de la Queue
+=======
+>>>>>>> 877a4239ae4c37bdb4dd344fa22a87219222cb6f
 mort par collision de la Queue

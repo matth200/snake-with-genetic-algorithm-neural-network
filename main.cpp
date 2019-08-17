@@ -21,14 +21,21 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
+<<<<<<< HEAD
 #define NBR_POPULATION 10
 #define FRQ_MUTATION 0.02
 #define MIXADN_CURSOR 0.7
 #define NBR_SELECTION 70
+=======
+#define NBR_POPULATION 600
+#define FRQ_MUTATION 0.1
+#define NBR_SELECTION 500
+>>>>>>> 877a4239ae4c37bdb4dd344fa22a87219222cb6f
 
 #define MOVES_LEFT 200
 
-#define RANDOM_VALUE 100
+#define RANDOM_VALUE_W 4
+#define RANDOM_VALUE_B 4
 
 using namespace std;
 
@@ -45,7 +52,7 @@ void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m);
 void getAdn(MachineLearning &m, vector<double> &adn);
 void setAdn(MachineLearning &m, vector<double> &adn);
 void makeBabys(MachineLearning &m1, MachineLearning &m2);
-VarSelection selectionRandomly(vector<VarSelection> &players);
+VarSelection selectionRandomly(vector<VarSelection> &players, int &a);
 double distance(int x1, int y1, int x2, int y2);
 
 int main ( int argc, char** argv )
@@ -67,7 +74,7 @@ int main ( int argc, char** argv )
 		return 1;
 	}
 
-	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",20);
+	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",16);
 
 	//variable pour la selection
 	vector<VarSelection> snakeSelection, playerSelection;
@@ -98,19 +105,21 @@ int main ( int argc, char** argv )
 	//IA snake
 	bool autonome = 1;
 
-	MachineLearning playerIA(24);
+	MachineLearning playerIA(24); 
 	playerIA.addColumn(18);
 	playerIA.addColumn(4);
 
+	double frq_mut = FRQ_MUTATION;
+
 	//random
-	playerIA.setWeightRandom(RANDOM_VALUE,RANDOM_VALUE);
+	playerIA.setWeightRandom(RANDOM_VALUE_W,RANDOM_VALUE_B);
 
 	//snake
 	Snake snake(60,60);
 	snake.setMove(MOVES_LEFT);
 
 	//genetic algorithm
-	int generation = 1, oldGeneration = 0;
+	int generation = 0, oldGeneration = -1;
 
 	SDL_Surface *texteGeneration = NULL;
 	SDL_Rect posTexte;
@@ -188,6 +197,9 @@ int main ( int argc, char** argv )
 								buttonSpeed = 1;
 							}
 							break;
+						case SDLK_DOWN:
+							speed = 3;
+							break;
 					}
 					break;
 
@@ -239,14 +251,13 @@ int main ( int argc, char** argv )
 		//barre qui sépare le score du jeu
 		drawSquare(screen,0,SCREEN_HEIGHT,SCREEN_WIDTH,3,SDL_MapRGB(screen->format,255,255,255));
 		drawSquare(screen,SCREEN_WIDTH,0,3,SCREEN_HEIGHT+OUTSCREEN_H,SDL_MapRGB(screen->format,255,255,255));
-
 		//on affiche les générations et le score de la meilleure IA
 		if(oldGeneration!=generation)
 		{
 			//on efface l'ancien texte
 			if(texteGeneration!=NULL)
 				SDL_FreeSurface(texteGeneration);
-			texteGeneration = TTF_RenderText_Solid(police,(string("Generation ")+(to_string(generation)+" best_IA score ")+to_string(best_IA.score)).c_str(),SDL_Color({255,255,255}));
+			texteGeneration = TTF_RenderText_Solid(police,(string("mut=")+to_string(frq_mut)+" Generation "+(to_string(generation)+" best_IA score ")+to_string(best_IA.score)).c_str(),SDL_Color({255,255,255}));
 		}
 		SDL_BlitSurface(texteGeneration,NULL,screen,&posTexte);
 
@@ -254,9 +265,12 @@ int main ( int argc, char** argv )
 		if(snake.gameover())
 		{
 			//on fait jouer les IA en arrière plan
-			while(NBR_POPULATION>playerSelection.size()&&autonome)
+			while(NBR_POPULATION>playerSelection.size())
 			{
-				tmpSelection.score = int(snake.get_step()+pow(snake.get_score()*10,2)*100);
+				//fitness function
+				double fitness = pow(snake.get_step(),2)*pow(2,snake.get_score());
+				tmpSelection.score = int(fitness);
+
 				snake.init_after();
 				tmpSelection.m = playerIA;
 				tmpSelection.best = 0;
@@ -278,7 +292,7 @@ int main ( int argc, char** argv )
 					}
 					//new player with random gene 
 					else{
-							playerIA.setWeightRandom(RANDOM_VALUE,RANDOM_VALUE);
+							playerIA.setWeightRandom(RANDOM_VALUE_W,RANDOM_VALUE_B);
 							log << "Random Player" << endl;
 					}
 
@@ -304,8 +318,9 @@ int main ( int argc, char** argv )
 					}
 				}
 			}
+
 			//on manipule la population pour obtenir de meilleur résultat
-			if(autonome&&NBR_POPULATION<=playerSelection.size()){
+			if(NBR_POPULATION<=playerSelection.size()){
 				selectionReady = 1;
 
 				//selection
@@ -338,13 +353,15 @@ int main ( int argc, char** argv )
 						}
 					}
 				}
+				snakeSelection.clear();
 
 				//on récupére le gagnant si il est meilleur que ceux des génération d'avant
+				comparaisonListe[0].best = 1;
 				if(comparaisonListe[0].score>best_IA.score)
-				{
-					comparaisonListe[0].best = 1;
 					best_IA = comparaisonListe[0];
-				}
+
+
+				//frq_mut = 1.0/double(comparaisonListe[0].score/1000.0);
 
 				//affichage de la liste
 				log << "generation " << generation << endl;
@@ -354,19 +371,43 @@ int main ( int argc, char** argv )
 				}
 				log << endl;
 
+				log << "before" << endl;
+				vector<VarSelection> copy = comparaisonListe;
 
-				snakeSelection.clear();
+				//on met le premier sans mutation et sans crossover
+				snakeSelection.push_back(comparaisonListe[0]);
 
-				for(int i(0);i<NBR_SELECTION;i++)
-					snakeSelection.push_back(comparaisonListe[i]);
-
-				//selection and create babys finally
-				vector<VarSelection> copy = snakeSelection;
-
-				while(snakeSelection.size()<NBR_SELECTION*2.0)
+				//reproduction des meilleurs
+				log << "best reproduction ----->>> " << endl;
+				for(int i(0);i<5;i++)
 				{
-					VarSelection parent1 = selectionRandomly(copy), parent2 = selectionRandomly(copy);
-					
+					VarSelection parent1 = comparaisonListe[i];
+					for(int j(0);j<5;j++)
+					{
+						VarSelection parent2 = comparaisonListe[j];
+						parent1.score = 0;
+						parent2.score = 0;
+
+						parent1.best = 0;
+						parent2.best = 0;
+
+						makeBabys(parent1.m,parent2.m);
+
+						log <<"| " << i << "&" << j << " --> BB |";
+						snakeSelection.push_back(parent1);
+					}
+				}
+				log << "random reproduction --->>>" << endl;
+				while(snakeSelection.size()<NBR_SELECTION)
+				{
+					//init parent
+					int b = 0, a = 0;
+					VarSelection parent1 = selectionRandomly(copy,b), parent2 = selectionRandomly(copy,a);
+					//on crée une boucle qui permet d'éviter qu'un parent se croise avec lui même
+					while(b==a)
+						parent2 = selectionRandomly(copy,a);
+
+					log <<"| " << b << "&" << a << " --> BB |";
 					//init babys
 					parent1.best=0;
 					parent2.best=0;
@@ -378,21 +419,22 @@ int main ( int argc, char** argv )
 
 					//ajout dans la liste
 					snakeSelection.push_back(parent1);
-					snakeSelection.push_back(parent2);
+					//snakeSelection.push_back(parent2);
 				}
-				log << "create babys okay" << endl;
 
-				//mutation
-				for(int i(0);i<snakeSelection.size();i++)
+				log << endl << "create babys okay" << endl;
+
+				//mutation i commence à 1 pour ne pas mettre de mutation sur le premier
+				for(int i(1);i<snakeSelection.size();i++)
 				{
 					//get adn
 					vector<double> adn;
 					getAdn(snakeSelection[i].m,adn);
 
 					//we gonna mutate this babyyyy
-					const int randomNumber = RANDOM_VALUE;
+					const int randomNumber = RANDOM_VALUE_W;
 					for(int j(0);j<adn.size();j++){
-						if(rand()%1000+1<=FRQ_MUTATION*1000.0)
+						if(rand()%1000+1<=frq_mut*1000.0)
 						{
 							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
 							log << "M";
@@ -405,14 +447,12 @@ int main ( int argc, char** argv )
 
 				log << "mutation okay " << endl;
 
-				//on met le premier sans mutation
-				snakeSelection.push_back(best_IA);
-
 				log << "number of neural network in the snakeSelection  " << snakeSelection.size() << endl;
 
 				//on indique qu'on passe à la génération d'au dessus
 				generation++;
 				selectionReady = 0;
+				autonome = 1;
 			}
 
 			//on initialise le snake
@@ -422,10 +462,10 @@ int main ( int argc, char** argv )
 			snake.setMove(MOVES_LEFT);
 
 			//on sélectionne le premier de la liste pour le faire jouer à l'écran
-			playerIA = snakeSelection[0].m;
-			if(snakeSelection[0].best)
+			playerIA = snakeSelection[2].m;
+			if(snakeSelection[2].best)
 				log << "bestPlayer play" << endl;
-			snakeSelection.erase(snakeSelection.begin());
+			snakeSelection.erase(snakeSelection.begin()+2);
 
 			log << "Babys Player to the screen" << endl;
 		}
@@ -447,12 +487,28 @@ int main ( int argc, char** argv )
 
 void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 {
+	int size = 24;
 	for(int j(0);j<m.getNumberColumn();j++)
 	{
 		for(int i(0);i<m.getNetwork(j)->get_number_neuron();i++)
 		{
+			//on affiche chaque neurone avec sa valeur plus ou moins blanche
 			double value = m.getNetwork(j)->get_neuron(i)->get_value();
-			drawSquare(screen,SCREEN_WIDTH+30+j*60,50+i*30,20,20,SDL_MapRGB(screen->format,value*255.0,value*255.0,value*255.0));
+			Uint32 color = SDL_MapRGB(screen->format,value*255.0,50+value*205.0,value*255.0);
+
+			//si c'est la direction souhaité
+			if(m.getNumberColumn()-1==j&&i==m.getPrediction())
+				color = SDL_MapRGB(screen->format,25,200,200);
+
+			drawSquare(screen,SCREEN_WIDTH+40+j*100,50+((size-m.getNetwork(j)->get_number_neuron())/2.0+i)*30,20,20,color);
+			for(int a(0);a<m.getNetwork(j)->get_neuron(i)->numberConnection()&&j!=0;a++)
+			{
+				value = m.getNetwork(j-1)->get_neuron(a)->get_value();
+				color = SDL_MapRGB(screen->format,value*25,value*25,value*200);
+				if(m.getNetwork(j)->get_neuron(i)->get_weight(a)<0)
+					color = SDL_MapRGB(screen->format,value*200,value*25,value*25);
+				drawLine(screen,SCREEN_WIDTH+40+(j-1)*100+20,50+((size-m.getNetwork(j-1)->get_number_neuron())/2.0+a)*30+10,SCREEN_WIDTH+40+j*100,50+((size-m.getNetwork(j)->get_number_neuron())/2.0+i)*30+10,color);
+			}
 		}
 	}
 }
@@ -468,9 +524,10 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 
 	//mix the adn <<<----
 	log << "adn |";
+	int cursor = 1+rand()%(adn1.size()-2);
 	for(int i(0);i<adn1.size();i++)
 	{
-		if(rand()%1000<MIXADN_CURSOR*1000.0)
+		if(rand()%100<70)
 		{
 			log << "O";
 			adnT1.push_back(adn1[i]);
@@ -537,9 +594,13 @@ void setAdn(MachineLearning &m, vector<double> &adn)
 			}
 		}
 	}
+	else{
+		ofstream log("errorSetADN.txt");
+		log << "error" << endl;
+	}
 }
 
-VarSelection selectionRandomly(vector<VarSelection> &players)
+VarSelection selectionRandomly(vector<VarSelection> &players, int &a)
 {
 	int sum = 0;
 	for(int i(0);i<players.size();i++)
@@ -549,19 +610,17 @@ VarSelection selectionRandomly(vector<VarSelection> &players)
 
 	int arrow = rand()%sum;
 	int valeurCum = 0;
-	for(int i(0);i<players.size();i++)
+	bool done = 0;
+	for(int i(0);i<players.size()&&!done;i++)
 	{
-		if(valeurCum<=arrow&&players[i].score+valeurCum>arrow)
-		{
-			VarSelection copy = players[i];
-			copy.score = 0;
-			players.erase(players.begin()+i);
-			return copy;
-		}
 		valeurCum+=players[i].score;
+		if(valeurCum>arrow)
+		{		
+			a = i;
+			return players[i];
+		}
 	}
-	VarSelection copy;
-	return copy;
+	return players[0];
 }
 
 double distance(int x1, int y1, int x2, int y2)

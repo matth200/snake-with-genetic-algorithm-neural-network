@@ -25,7 +25,11 @@ void drawLine(SDL_Surface *screen, int x1, int y1, int x2, int y2, Uint32 color)
 		}
 	}
 	else{
-
+		double diffX = x2-x1, diffY = y1-y2;
+		for(int i(0);i<abs(diffX);i++)
+		{
+			setPixel(screen,x1+i,y1-diffY/diffX*i,color);
+		}
 	}
 }
 
@@ -130,12 +134,19 @@ void Snake::init_after()
 
 	//step
 	step = 0;
+
+	mouvements = 0;
 }
 
 void Snake::setMove(int m)
 {
 	init_move = m;
-	mouvements = m;
+	move_left = m;
+}
+
+int Snake::getMoveLeft()
+{
+	return move_left;
 }
 
 int Snake::getMove()
@@ -176,16 +187,16 @@ void Snake::newFood()
 		randomFood = rand()%(m_w*m_h);
 	}while(collisionQueue(randomFood%m_w,int(randomFood/m_w))||(queue[0].x==randomFood%m_w&&queue[0].y==int(randomFood/m_w)));
 
-	mouvements = init_move+score*100;
-	if(mouvements>500)
-		mouvements=500;
+	move_left = init_move+score*100;
+	if(move_left>500)
+		move_left=500;
 
 	//nouvelle nouriture
 	food.x = randomFood%m_w;
 	food.y = int(randomFood/m_w);
 }
 
-char* Snake::getRangeWall()
+char* Snake::getRangeWall(SDL_Surface *screen)
 {
 	unsigned char *data = new unsigned char[8];
 	memset(data,0,8);
@@ -196,9 +207,14 @@ char* Snake::getRangeWall()
 	unsigned char index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionWall(p.x+i,p.y);
-		if(collision)
+		int x = p.x+i, y= p.y;
+		collision = collisionWall(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+		}
+		else if(screen!=NULL){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,100,100));
+		}
 	}
 	data[1] = index;
 
@@ -207,9 +223,14 @@ char* Snake::getRangeWall()
 	index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionWall(p.x-i,p.y);
-		if(collision)
+		int x = p.x-i, y= p.y;
+		collision = collisionWall(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+		}
+		else if(screen!=NULL){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,100,100));
+		}
 	}
 	data[0] = index;
 
@@ -218,9 +239,14 @@ char* Snake::getRangeWall()
 	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
-		collision = collisionWall(p.x,p.y+i);
-		if(collision)
+		int x = p.x, y= p.y+i;
+		collision = collisionWall(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+		}
+		else if(screen!=NULL){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,100,100));
+		}
 	}
 	data[3] = index;
 
@@ -229,9 +255,14 @@ char* Snake::getRangeWall()
 	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
-		collision = collisionWall(p.x,p.y-i);
-		if(collision)
+		int x = p.x, y= p.y-i;
+		collision = collisionWall(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+		}
+		else if(screen!=NULL){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,100,100));
+		}
 	}
 	data[2] = index;
 
@@ -282,7 +313,7 @@ char* Snake::getRangeWall()
 	return (char*)data;
 }
 
-char* Snake::getRangeQueue()
+char* Snake::getRangeQueue(SDL_Surface *screen)
 {
 	unsigned char *data = new unsigned char[8];
 	memset(data,0,8);
@@ -291,46 +322,70 @@ char* Snake::getRangeQueue()
 	Pos p = queue[0];
 	
 	//droite
-	bool collision = 0;
+	bool collision = 0, stop = 0;
 	unsigned char index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionQueue(p.x+i,p.y);
-		if(collision)
+		int x = p.x+i, y= p.y;
+		collision = collisionQueue(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[1] = index;
 
 	//gauche
-	collision = 0;
+	collision = 0, stop = 0;
 	index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionQueue(p.x-i,p.y);
-		if(collision)
+		int x = p.x-i, y= p.y;
+		collision = collisionQueue(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[0] = index;
 
 	//en bas
-	collision = 0;
+	collision = 0, stop = 0;
 	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
-		collision = collisionQueue(p.x,p.y+i);
-		if(collision)
+		int x = p.x, y= p.y+i;
+		collision = collisionQueue(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[3] = index;
 
 	//en haut
-	collision = 0;
+	collision = 0, stop = 0;
 	index = 0;
 	for(int i(1);i<m_h&&!collision;i++)
 	{
-		collision = collisionQueue(p.x,p.y-i);
-		if(collision)
+		int x = p.x, y= p.y-i;
+		collision = collisionQueue(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[2] = index;
 
@@ -381,7 +436,7 @@ char* Snake::getRangeQueue()
 	return (char*)data;
 }
 
-char* Snake::getRangeFood()
+char* Snake::getRangeFood(SDL_Surface *screen)
 {
 	unsigned char *data = new unsigned char[8];
 	memset(data,0,8);
@@ -390,90 +445,145 @@ char* Snake::getRangeFood()
 	Pos p = queue[0];
 	
 	//droite
-	bool collision = 0;
+	bool collision = 0, stop = 0;
 	unsigned char index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x+i,p.y);
-		if(collision)
+		int x = p.x+i, y= p.y;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[1] = index;
 
 	//gauche
 	collision = 0;
+	stop = 0;
 	index = 0;
 	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x-i,p.y);
-		if(collision)
+		int x = p.x-i, y= p.y;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[0] = index;
 
 	//en bas
 	collision = 0;
+	stop = 0;
 	index = 0;
-	for(int i(1);i<m_h&&!collision;i++)
+	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x,p.y+i);
-		if(collision)
+		int x = p.x, y= p.y+i;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[3] = index;
 
 	//en haut
 	collision = 0;
+	stop = 0;
 	index = 0;
-	for(int i(1);i<m_h&&!collision;i++)
+	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x,p.y-i);
-		if(collision)
+		int x = p.x, y= p.y-i;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[2] = index;
 
 	//diagonal en haut à gauche
 	collision = 0;
+	stop = 0;
 	index = 0;
-	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x-i,p.y-i);
-		if(collision)
+		int x = p.x-i, y= p.y-i;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[4] = index;
 
 	//diagonal en haut à droite
 	collision = 0;
+	stop = 0;
 	index = 0;
-	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x+i,p.y-i);
-		if(collision)
+		int x = p.x+i, y= p.y-i;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[5] = index;
 
 	//diagonal en bas à droite
 	collision = 0;
+	stop = 0;
 	index = 0;
-	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x+i,p.y+i);
-		if(collision)
+		int x = p.x+i, y= p.y+i;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[6] = index;
 
 	//diagonal en bas à gauche
 	collision = 0;
+	stop = 0;
 	index = 0;
-	for(int i(1);i<m_h&&i<m_w&&!collision;i++)
+	for(int i(1);i<m_w&&!collision;i++)
 	{
-		collision = collisionFood(p.x-i,p.y+i);
-		if(collision)
+		int x = p.x-i, y= p.y+i;
+		collision = collisionFood(x,y);
+		if(collision){
 			index = (unsigned char)(255-double(i-1)/m_w*255.0);
+			stop = 1;
+		}
+		else if(screen!=NULL&&!stop){
+			drawSquare(screen,x*SCREEN_WIDTH/m_w,y*SCREEN_HEIGHT/m_h,SCREEN_WIDTH/m_w,SCREEN_HEIGHT/m_h,SDL_MapRGB(screen->format,100,200,100));
+		}
 	}
 	data[7] = index;
 
@@ -578,8 +688,10 @@ void Snake::draw(SDL_Surface *screen, bool noanimation)
 		Pos test = queue[0];
 
 		//changements de direction
-		if(beforeDirection!=direction)
-			mouvements--;
+		if(beforeDirection!=direction){
+			move_left--;
+			mouvements++;
+		}
 		beforeDirection = direction;
 
 		//on applique le mouvement par rapport à la direction voulu
@@ -602,7 +714,7 @@ void Snake::draw(SDL_Surface *screen, bool noanimation)
 		Pos oldPos = queue[0];
 
 		//on bloque l'avancement si il y a un mur
-		if(!collisionWall(test.x,test.y)&&!collisionQueue(test.x,test.y)&&mouvements>0)
+		if(!collisionWall(test.x,test.y)&&!collisionQueue(test.x,test.y)&&move_left>0)
 		{
 			queue[0] = test;
 			//effacement de la map
@@ -627,7 +739,7 @@ void Snake::draw(SDL_Surface *screen, bool noanimation)
 			//affichage de la cause
 			if(!noanimation)
 			{
-				if(mouvements<=0)
+				if(move_left<=0)
 					log2 << "mort par mouvement trop intense" << endl;
 				else if(collisionQueue(test.x,test.y))
 					log2 << "mort par collision de la Queue" << endl;
@@ -663,7 +775,7 @@ void Snake::draw(SDL_Surface *screen, bool noanimation)
 		//stringstream streamTime;
 		//streamTime << std::fixed << std::setprecision(3) << chrono::duration_cast<chrono::milliseconds>(secondTime-startTime).count()/1000.0; 
 
-		SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+" ("+to_string(max_score)+")    step : "+to_string(mouvements)).c_str(),SDL_Color({255,255,255}));
+		SDL_Surface *texte = TTF_RenderText_Solid(police,(string("score : ")+to_string(score)+" ("+to_string(max_score)+")    step : "+to_string(get_step())).c_str(),SDL_Color({255,255,255}));
 		SDL_Rect pos;
 		pos.y = SCREEN_HEIGHT+25;
 		pos.x = 25;
