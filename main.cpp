@@ -21,16 +21,10 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
-<<<<<<< HEAD
-#define NBR_POPULATION 10
-#define FRQ_MUTATION 0.02
+#define NBR_POPULATION 500
+#define FRQ_MUTATION 0.08
 #define MIXADN_CURSOR 0.7
-#define NBR_SELECTION 70
-=======
-#define NBR_POPULATION 600
-#define FRQ_MUTATION 0.1
-#define NBR_SELECTION 500
->>>>>>> 877a4239ae4c37bdb4dd344fa22a87219222cb6f
+#define NBR_SELECTION 400
 
 #define MOVES_LEFT 200
 
@@ -49,8 +43,8 @@ struct VarSelection
 
 
 void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m);
-void getAdn(MachineLearning &m, vector<double> &adn);
-void setAdn(MachineLearning &m, vector<double> &adn);
+void getAdn(MachineLearning &m, vector<unsigned int> &adn);
+void setAdn(MachineLearning &m, vector<unsigned int> &adn);
 void makeBabys(MachineLearning &m1, MachineLearning &m2);
 VarSelection selectionRandomly(vector<VarSelection> &players, int &a);
 double distance(int x1, int y1, int x2, int y2);
@@ -106,7 +100,8 @@ int main ( int argc, char** argv )
 	bool autonome = 1;
 
 	MachineLearning playerIA(24); 
-	playerIA.addColumn(18);
+	playerIA.addColumn(16); 
+	playerIA.addColumn(16);
 	playerIA.addColumn(4);
 
 	double frq_mut = FRQ_MUTATION;
@@ -428,15 +423,14 @@ int main ( int argc, char** argv )
 				for(int i(1);i<snakeSelection.size();i++)
 				{
 					//get adn
-					vector<double> adn;
+					vector<unsigned int> adn;
 					getAdn(snakeSelection[i].m,adn);
 
 					//we gonna mutate this babyyyy
-					const int randomNumber = RANDOM_VALUE_W;
 					for(int j(0);j<adn.size();j++){
 						if(rand()%1000+1<=frq_mut*1000.0)
 						{
-							adn[j] = double(rand()%(randomNumber*1000)/1000.0-double(randomNumber)/2.0);
+							adn[j] = (1u << rand()%32) ^ adn[j];
 							log << "M";
 						}
 					}
@@ -462,10 +456,10 @@ int main ( int argc, char** argv )
 			snake.setMove(MOVES_LEFT);
 
 			//on sélectionne le premier de la liste pour le faire jouer à l'écran
-			playerIA = snakeSelection[2].m;
-			if(snakeSelection[2].best)
+			playerIA = snakeSelection[1].m;
+			if(snakeSelection[1].best)
 				log << "bestPlayer play" << endl;
-			snakeSelection.erase(snakeSelection.begin()+2);
+			snakeSelection.erase(snakeSelection.begin());
 
 			log << "Babys Player to the screen" << endl;
 		}
@@ -516,7 +510,7 @@ void drawNeuralNetwork(SDL_Surface *screen, MachineLearning &m)
 void makeBabys(MachineLearning &m1, MachineLearning &m2)
 {
 	//get the adn 
-	vector<double> adn1, adn2, adnT1, adnT2;
+	vector<unsigned int> adn1, adn2, adnT1, adnT2;
 	//pour qu'il prenne les meme réseaux de neurone
 	getAdn(m1,adn1);
 	getAdn(m2,adn2);
@@ -527,7 +521,7 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 	int cursor = 1+rand()%(adn1.size()-2);
 	for(int i(0);i<adn1.size();i++)
 	{
-		if(rand()%100<70)
+		if(i<cursor)
 		{
 			log << "O";
 			adnT1.push_back(adn1[i]);
@@ -544,7 +538,7 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 	setAdn(m2,adnT2);
 }
 
-void getAdn(MachineLearning &m, vector<double> &adn)
+void getAdn(MachineLearning &m, vector<unsigned int> &adn)
 {
 	adn.clear();
 	for(int l(0);l<m.getNumberColumn()-1;l++)
@@ -553,14 +547,14 @@ void getAdn(MachineLearning &m, vector<double> &adn)
 		{
 			for(int i(0);i<m.getNetwork(l+1)->get_neuron(j)->numberConnection();i++)
 			{
-				adn.push_back(m.getNetwork(l+1)->get_neuron(j)->get_weight(i));
+				adn.push_back((m.getNetwork(l+1)->get_neuron(j)->get_weight(i)+RANDOM_VALUE_W/2.0)/RANDOM_VALUE_W*4294967296);
 			}
-			adn.push_back(m.getNetwork(l+1)->get_neuron(j)->get_bias());
+			adn.push_back((m.getNetwork(l+1)->get_neuron(j)->get_bias()+RANDOM_VALUE_B/2.0)/RANDOM_VALUE_B*4294967296);
 		}
 	}
 }
 
-void setAdn(MachineLearning &m, vector<double> &adn)
+void setAdn(MachineLearning &m, vector<unsigned int> &adn)
 {
 	int index = 0;
 	for(int l(0);l<m.getNumberColumn()-1;l++)
@@ -586,10 +580,10 @@ void setAdn(MachineLearning &m, vector<double> &adn)
 			{
 				for(int i(0);i<m.getNetwork(l+1)->get_neuron(j)->numberConnection();i++)
 				{
-					m.getNetwork(l+1)->get_neuron(j)->set_weight(i,adn[index]);
+					m.getNetwork(l+1)->get_neuron(j)->set_weight(i,adn[index]/4294967296.0*RANDOM_VALUE_W-RANDOM_VALUE_W/2.0);
 					index++;
 				}
-				m.getNetwork(l+1)->get_neuron(j)->set_bias(adn[index]);
+				m.getNetwork(l+1)->get_neuron(j)->set_bias(adn[index]/4294967296.0*RANDOM_VALUE_B-RANDOM_VALUE_B/2.0);
 				index++;
 			}
 		}
