@@ -21,15 +21,14 @@ typedef std::chrono::high_resolution_clock::time_point time_point;
 #define FPS 30
 
 //parametre GENETIC_ALGORITHM
-#define NBR_POPULATION 500
+#define NBR_POPULATION 2000
 #define FRQ_MUTATION 0.08
-#define MIXADN_CURSOR 0.7
-#define NBR_SELECTION 400
+#define NBR_SELECTION 1800
 
 #define MOVES_LEFT 200
 
-#define RANDOM_VALUE_W 4
-#define RANDOM_VALUE_B 4
+#define RANDOM_VALUE_W 10
+#define RANDOM_VALUE_B 10
 
 using namespace std;
 
@@ -263,7 +262,9 @@ int main ( int argc, char** argv )
 			while(NBR_POPULATION>playerSelection.size())
 			{
 				//fitness function
-				double fitness = pow(snake.get_step(),2)*pow(2,snake.get_score());
+				double fitness = pow(100,snake.get_score())+snake.get_step();
+				if(snake.get_score()>3)
+					fitness = pow(2,snake.get_step())*pow(snake.get_score(),2);
 				tmpSelection.score = int(fitness);
 
 				snake.init_after();
@@ -597,9 +598,11 @@ void setAdn(MachineLearning &m, vector<unsigned int> &adn)
 VarSelection selectionRandomly(vector<VarSelection> &players, int &a)
 {
 	int sum = 0;
+	
+	//selection with the index 
 	for(int i(0);i<players.size();i++)
 	{
-		sum+=players[i].score;
+		sum+=pow(players.size()-(i+1),2);
 	}
 
 	int arrow = rand()%sum;
@@ -607,7 +610,7 @@ VarSelection selectionRandomly(vector<VarSelection> &players, int &a)
 	bool done = 0;
 	for(int i(0);i<players.size()&&!done;i++)
 	{
-		valeurCum+=players[i].score;
+		valeurCum+=pow(players.size()-(i+1),2);
 		if(valeurCum>arrow)
 		{		
 			a = i;
