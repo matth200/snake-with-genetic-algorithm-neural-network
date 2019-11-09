@@ -1,14 +1,12 @@
-mort par collision de la Queue
-mort par collision sur un mur
-mort par collision de la Queue
-mort par collision de la Queue
-mort par collision de la Queue
 mort par collision sur un mur
 mort par collision de la Queue
 mort par collision de la Queue
 mort par collision sur un mur
 mort par collision de la Queue
 mort par collision sur un mur
+mort par collision sur un mur
+mort par collision de la Queue
+mort par collision de la Queue
 mort par collision de la Queue
 mort par collision sur un mur
 mort par collision sur un mur
@@ -16,3 +14,17 @@ mort par collision de la Queue
 mort par collision sur un mur
 mort par collision sur un mur
 mort par collision sur un mur
+mort par collision sur un mur
+mort par collision sur un mur
+mort par collision sur un mur
+mort par collision sur un mur
+mort par collision sur un mur
+mort par mouvement trop intense
+mort par collision sur un mur
+mort par collision de la Queue
+mort par collision de la Queue
+mort par collision de la Queue
+mort par collision de la Queue
+mort par collision de la Queue
+mort par collision sur un mur
+mort par collision de la Queue

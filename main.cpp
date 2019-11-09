@@ -262,9 +262,9 @@ int main ( int argc, char** argv )
 			while(NBR_POPULATION>playerSelection.size())
 			{
 				//fitness function
-				double fitness = pow(100,snake.get_score())+snake.get_step();
+				double fitness = pow(30,snake.get_score())*pow(snake.get_step(),2);
 				if(snake.get_score()>3)
-					fitness = pow(2,snake.get_step())*pow(snake.get_score(),2);
+					fitness = pow(snake.get_step(),2)*pow(2,snake.get_score());
 				tmpSelection.score = int(fitness);
 
 				snake.init_after();
