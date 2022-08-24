@@ -27,7 +27,7 @@ clean:
 	rm -f $(BIN_FOLDER)/*.o
 
 clean-log:
-	rm -f $(LOG_FOLDER)/*.log
+	rm -f $(LOG_FOLDER)/*.txt
 
 clean-all: clean clean-log
 	rm -f $(BIN_FOLDER)/$(APP_NAME)
