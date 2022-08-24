@@ -14,9 +14,9 @@
 //this_thread::sleep_for();
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
-#include "snake.h"
+#include "src/snake.h"
 
-#include "m_learning.h"
+#include "src/m_learning.h"
 
 #define FPS 30
 
@@ -51,7 +51,7 @@ double distance(int x1, int y1, int x2, int y2);
 int main ( int argc, char** argv )
 {
 
-	ofstream log("log.txt");
+	ofstream log("../log/log.txt");
 	srand(time(NULL));
 	log << "init" << endl;
 	// initialize SDL video
@@ -67,7 +67,7 @@ int main ( int argc, char** argv )
 		return 1;
 	}
 
-	TTF_Font *police = TTF_OpenFont("pixel_font.ttf",16);
+	TTF_Font *police = TTF_OpenFont("../ressources/pixel_font.ttf",16);
 
 	//variable pour la selection
 	vector<VarSelection> snakeSelection, playerSelection;
@@ -515,7 +515,7 @@ void makeBabys(MachineLearning &m1, MachineLearning &m2)
 	//pour qu'il prenne les meme réseaux de neurone
 	getAdn(m1,adn1);
 	getAdn(m2,adn2);
-	ofstream log("logBabys.txt");
+	ofstream log("../log/logBabys.txt");
 
 	//mix the adn <<<----
 	log << "adn |";
